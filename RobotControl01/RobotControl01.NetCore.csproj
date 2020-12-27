@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="TinyYolo2_model.onnx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="TinyYolo2_model.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML" Version="1.5.1" />
+    <PackageReference Include="Microsoft.ML.ImageAnalytics" Version="1.5.1" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.4.0" />
+    <PackageReference Include="Microsoft.ML.OnnxTransformer" Version="1.5.1" />
+    <PackageReference Include="OpenCvSharp4" Version="4.4.0.20200725" />
+    <PackageReference Include="OpenCvSharp4.Windows" Version="4.4.0.20200725" />
+  </ItemGroup>
+
+</Project>

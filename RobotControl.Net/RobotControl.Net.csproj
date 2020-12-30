@@ -11,7 +11,7 @@
     <ProjectGuid>{6E46E2D8-942C-4505-AA66-CBD90F966A27}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>RobotControl.Net</RootNamespace>
-    <AssemblyName>RobotControl.Net</AssemblyName>
+    <AssemblyName>RobotControl</AssemblyName>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -351,6 +351,18 @@
     <Compile Include="Constants.cs" />
     <Compile Include="Enumerations.cs" />
     <Compile Include="EventDescriptor.cs" />
+    <Compile Include="FakeCameraCapturer.cs" />
+    <Compile Include="FakeObjectDetector.cs" />
+    <Compile Include="FakeRobotLogic.cs" />
+    <Compile Include="FakeRobotCommunicationHandler.cs" />
+    <Compile Include="FakeSpeechCommandListener.cs" />
+    <Compile Include="ICameraCapturer.cs" />
+    <Compile Include="IMediator.cs" />
+    <Compile Include="IObjectDetector.cs" />
+    <Compile Include="IRobotCommunicationHandler.cs" />
+    <Compile Include="IRobotLogic.cs" />
+    <Compile Include="ISerialPort.cs" />
+    <Compile Include="ISpeechCommandListener.cs" />
     <Compile Include="IState.cs" />
     <Compile Include="IStrategy.cs" />
     <Compile Include="Mediator.cs" />
@@ -361,6 +373,8 @@
     <Compile Include="PubSubInterfaces.cs" />
     <Compile Include="RobotCommunicationHandler.cs" />
     <Compile Include="RobotLogic.cs" />
+    <Compile Include="SerialPortFake.cs" />
+    <Compile Include="SerialPortImpl.cs" />
     <Compile Include="Speaker.cs" />
     <Compile Include="SpeechCommandListener.cs" />
     <Compile Include="State.cs" />
@@ -368,6 +382,9 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+    <Content Include="FakeCameraCapturer.mp4">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="TinyYolo2_model.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

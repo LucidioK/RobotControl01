@@ -5,7 +5,7 @@ namespace RobotControl.Net
 
     using System;
 
-    class State : IState, IPublishTarget
+    class State : IState
     {
         private RobotState robotState;
         private float obstacleDistance;

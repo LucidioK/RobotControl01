@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace RobotControl.Net
 {
-    internal class SpeechCommandListener : ISubscriptionTarget
+    internal class SpeechCommandListener : ISpeechCommandListener
     {
         private readonly Thread thread;
         SpeechRecognitionEngine speechRecognitionEngine = new SpeechRecognitionEngine();

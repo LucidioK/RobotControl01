@@ -2,7 +2,7 @@
 namespace RobotControl.Net
 {
     using System;
-    internal class RobotLogic : IPublishTarget
+    internal class RobotLogic : IRobotLogic
     {
         private PubSub pubSub = new PubSub();
         private IState state;
@@ -38,7 +38,7 @@ namespace RobotControl.Net
 
         private void handleVoiceCommand(IEventDescriptor eventDescriptor)
         {
-            switch (eventDescriptor.Detail.Replace("robot ","").Replace("robot",""))
+            switch (eventDescriptor.Detail.Replace("robot ", "").Replace("robot", ""))
             {
                 case "start":
                     startScanningObjects();

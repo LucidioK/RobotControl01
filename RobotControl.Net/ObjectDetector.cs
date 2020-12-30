@@ -12,30 +12,30 @@ namespace RobotControl.Net
     using System.Drawing;
     using System.Linq;
 
-    public class ObjectDetector : ISubscriptionTarget, IPublishTarget
+    public class ObjectDetector : IObjectDetector
     {
         private readonly TinyYoloModel tinyYoloModel;
         private readonly OnnxModelConfigurator onnxModelConfigurator;
         private readonly OnnxOutputParser onnxOutputParser;
         private readonly PredictionEngine<ImageInputData, TinyYoloPrediction> tinyYoloPredictionEngine;
 
-        public int ImageWidth        => ImageSettings.imageWidth;
-        public int ImageHeight       => ImageSettings.imageHeight;
+        public int ImageWidth => ImageSettings.imageWidth;
+        public int ImageHeight => ImageSettings.imageHeight;
 
         public ObjectDetector(string onnxFilePath)
         {
-            tinyYoloModel            = new TinyYoloModel(onnxFilePath);
-            onnxModelConfigurator    = new OnnxModelConfigurator(tinyYoloModel);
-            onnxOutputParser         = new OnnxOutputParser(tinyYoloModel);
+            tinyYoloModel = new TinyYoloModel(onnxFilePath);
+            onnxModelConfigurator = new OnnxModelConfigurator(tinyYoloModel);
+            onnxOutputParser = new OnnxOutputParser(tinyYoloModel);
             tinyYoloPredictionEngine = onnxModelConfigurator.GetMlNetPredictionEngine<TinyYoloPrediction>();
         }
 
         public BoundingBox[] DetectObjects(Bitmap bitmap)
         {
-            var prediction           = tinyYoloPredictionEngine.Predict(new ImageInputData { Image = bitmap });
-            var labels               = prediction.PredictedLabels;
-            var boundingBoxes        = onnxOutputParser.ParseOutputs(labels);
-            var filteredBoxes        = onnxOutputParser.FilterBoundingBoxes(boundingBoxes, 5, 0.5f);
+            var prediction = tinyYoloPredictionEngine.Predict(new ImageInputData { Image = bitmap });
+            var labels = prediction.PredictedLabels;
+            var boundingBoxes = onnxOutputParser.ParseOutputs(labels);
+            var filteredBoxes = onnxOutputParser.FilterBoundingBoxes(boundingBoxes, 5, 0.5f);
             pubSub.Publish(new EventDescriptor { Name = EventName.ObjectDetected, Detail = JsonConvert.SerializeObject(filteredBoxes) });
             return filteredBoxes.ToArray();
         }

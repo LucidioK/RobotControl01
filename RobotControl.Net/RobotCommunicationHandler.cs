@@ -6,7 +6,7 @@ namespace RobotControl.Net
     using System.IO.Ports;
     using System.Threading;
 
-    internal class RobotCommunicationHandler : ISubscriptionTarget, IPublishTarget
+    internal class RobotCommunicationHandler : IRobotCommunicationHandler
     {
         SerialPort serialPort;
         IState state;

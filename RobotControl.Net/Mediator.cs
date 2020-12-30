@@ -5,27 +5,34 @@ namespace RobotControl.Net
     using System.Collections.Generic;
     using System.Linq;
 
-    class Mediator : IPublishTarget
+    class Mediator : IMediator
     {
-        ConcurrentQueue<IPublishTarget> publishTargets;
+        readonly ConcurrentQueue<IPublishTarget> publishTargets;
 
         public Mediator(IEnumerable<IPubSubBase> targets)
         {
             foreach (var target in targets)
             {
-                if (implements(target, nameof(IPublishTarget)))
-                {
-                    publishTargets.Enqueue((IPublishTarget)target);
-                }
-                if (implements(target, nameof(ISubscriptionTarget)))
-                {
-                    ((ISubscriptionTarget)target).Subscribe(this);
-                }
+                EnqueueTargetIfNeeded(target);
+                SubscribeIfNeeded(target);
             }
         }
 
-        public void OnEvent(IEventDescriptor eventDescriptor) => publishTargets.ToList().ForEach(t => t.OnEvent(eventDescriptor));
+        private void SubscribeIfNeeded(IPubSubBase target) =>
+            (target as ISubscriptionTarget)?.Subscribe(this);
 
-        private bool implements(object o, string interfaceName) => o.GetType().GetInterface(interfaceName) != null;
+        private void EnqueueTargetIfNeeded(IPubSubBase target)
+        {
+            if (Implements(target, nameof(IPublishTarget)))
+            {
+                publishTargets.Enqueue((IPublishTarget)target);
+            }
+        }
+
+        public void OnEvent(IEventDescriptor eventDescriptor) => 
+            publishTargets.ToList().ForEach(t => t.OnEvent(eventDescriptor));
+
+        private bool Implements(object o, string interfaceName) => 
+            o.GetType().GetInterface(interfaceName) != null;
     }
 }

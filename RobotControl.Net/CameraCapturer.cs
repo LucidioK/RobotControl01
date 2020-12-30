@@ -6,19 +6,22 @@
     using System;
     using System.Collections.Concurrent;
     using System.Drawing;
+    using System.IO;
     using System.Threading;
 
-    internal class CameraCapturer : ISubscriptionTarget
+    internal class CameraCapturer : ICameraCapturer
     {
+        private const string FakeCameraCapturerVideoPath = "FakeCameraCapturer.mp4";
         private VideoCapture videoCapture;
         private readonly Thread cameraThread;
         private object latestBitmapLock = new object();
         private Bitmap latestBitmap;
         private bool fresh = false;
+        private bool fake;
 
-        public CameraCapturer(IState state)
+        public CameraCapturer(bool fake)
         {
-            this.state = state;
+            this.fake = fake;
             cameraThread = new Thread(new ThreadStart(CameraCaptureLoopThread));
             cameraThread.Start();
         }
@@ -39,15 +42,13 @@
             }
         }
 
-        IState state;
         private void CameraCaptureLoopThread()
         {
             Console.Clear();
 
-            videoCapture = new VideoCapture(0);
-            videoCapture.Open(0);
+            StartCapture();
             var frame = new Mat();
-            while (videoCapture.IsOpened())
+            while ((frame = ReadFromCapturer()) != null)
             {
                 if (videoCapture.Read(frame) && Monitor.TryEnter(latestBitmapLock))
                 {
@@ -55,6 +56,64 @@
                     fresh = true;
                     pubSub.Publish(new EventDescriptor { Name = EventName.NewImageDetected, Bitmap = latestBitmap });
                 }
+            }
+        }
+
+        private Mat ReadFromCapturer()
+        {
+            Mat frame = new Mat();
+            videoCapture.Read(frame);
+            if (frame.Empty() && fake)
+            {
+                videoCapture.Release();
+
+            }
+
+            if (frame.Empty() && !fake)
+            {
+                frame = null;
+            }
+
+            return frame;
+        }
+
+        private bool IsVideoCaptureOpened()
+        {
+            
+            if (fake) 
+            { 
+                videoCapture.
+            }
+            else
+            {
+                return videoCapture.IsOpened();
+            }
+                
+
+        }
+
+        private void StartCapture()
+        {
+            if (fake)
+            {
+                StartFakeCapture();
+            }
+            else
+            {
+                videoCapture = new VideoCapture(0);
+                videoCapture.Open(0);
+            }
+        }
+
+        private void StartFakeCapture()
+        {
+            if (File.Exists(FakeCameraCapturerVideoPath))
+            {
+                videoCapture = new VideoCapture(FakeCameraCapturerVideoPath);
+            }
+            else
+            {
+                throw new Exception($"Could not find video {FakeCameraCapturerVideoPath}");
             }
         }
 

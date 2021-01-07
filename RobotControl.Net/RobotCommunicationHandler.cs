@@ -8,19 +8,20 @@ namespace RobotControl.Net
 
     internal class RobotCommunicationHandler : IRobotCommunicationHandler
     {
-        SerialPort serialPort;
-        IState state;
-        public RobotCommunicationHandler(IState state)
+        ISerialPort serialPort;
+        public EventName[] HandledEvents => new EventName[] { EventName.NeedToMoveDetected };
+        public RobotCommunicationHandler(ISerialPort serialPort)
         {
-            this.state = state;
+            this.serialPort = serialPort;
+
             bool foundPort = false;
             while (!foundPort)
             {
                 for (int i = 1; i < 32 && !foundPort; i++)
                 {
-                    if (tryOpenSerialPort(i))
+                    if (serialPort.Open(i))
                     {
-                        string s = serialPort.ReadExisting();
+                        string s = serialPort.ReadLine().Trim(trimChars: new char[] { ' ', '\r', '\n' , '\t'});
                         if (s.StartsWith("{") && s.EndsWith("}"))
                         {
                             foundPort = true;
@@ -45,7 +46,7 @@ namespace RobotControl.Net
             while (true)
             {
                 var s = serialPort.ReadLine();
-                pubSub.Publish(new EventDescriptor { Name = EventName.RobotDataDetected, Detail = s });
+                pubSub.Publish(new EventDescriptor { Name = EventName.RawRobotDataDetected, Detail = s });
             }
         }
 
@@ -63,20 +64,6 @@ namespace RobotControl.Net
                     break;
                 default:
                     return;
-            }
-        }
-
-        private bool tryOpenSerialPort(int i)
-        {
-            try
-            {
-                serialPort = new SerialPort($"COM{i}", 9600);
-                serialPort.Open();
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
             }
         }
     }

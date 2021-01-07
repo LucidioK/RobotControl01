@@ -351,11 +351,6 @@
     <Compile Include="Constants.cs" />
     <Compile Include="Enumerations.cs" />
     <Compile Include="EventDescriptor.cs" />
-    <Compile Include="FakeCameraCapturer.cs" />
-    <Compile Include="FakeObjectDetector.cs" />
-    <Compile Include="FakeRobotLogic.cs" />
-    <Compile Include="FakeRobotCommunicationHandler.cs" />
-    <Compile Include="FakeSpeechCommandListener.cs" />
     <Compile Include="ICameraCapturer.cs" />
     <Compile Include="IMediator.cs" />
     <Compile Include="IObjectDetector.cs" />
@@ -386,7 +381,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="TinyYolo2_model.onnx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <None Include="RobotControl.Net_TemporaryKey.pfx" />
   </ItemGroup>

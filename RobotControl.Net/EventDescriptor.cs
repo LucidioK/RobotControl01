@@ -8,6 +8,7 @@ namespace RobotControl.Net
         Bitmap Bitmap { get; set; }
         float Value { get; }
         string Detail { get; }
+        IState State { get; }
     }
 
     class EventDescriptor : IEventDescriptor
@@ -19,5 +20,7 @@ namespace RobotControl.Net
         public Bitmap Bitmap { get; set; }
 
         public string Detail { get; set; }
+
+        public IState State { get; set; }
     }
 }

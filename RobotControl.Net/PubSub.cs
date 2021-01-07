@@ -7,6 +7,12 @@ namespace RobotControl.Net
     {
         protected ConcurrentQueue<IPublishTarget> publishTargets = new ConcurrentQueue<IPublishTarget>();
         public void Subscribe(IPublishTarget publisher)          => publishTargets.Enqueue(publisher);
-        public void Publish(IEventDescriptor eventDescriptor)    => publishTargets.ToList().ForEach(t => t.OnEvent(eventDescriptor));
+        public void Publish(IEventDescriptor eventDescriptor)
+        {
+            foreach (var publishTarget in publishTargets)
+            {
+                publishTarget.OnEvent(eventDescriptor);
+            }
+        }
     }
 }

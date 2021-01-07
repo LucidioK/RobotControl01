@@ -16,13 +16,12 @@
     {
         VoiceCommandDetected,
         RainDetected,
-        ObstacleDetected,
-        LowBatteryDetected,
         ObjectDetected,
         SensorValueDetected,
         NeedToMoveDetected,
         NewImageDetected,
-        RobotDataDetected,
+        RawRobotDataDetected,
+        RobotData,
         PleaseSay,
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace RobotControl.Net
 {
-    interface IState : IPublishTarget
+    public interface IState : IPublishTarget,ISubscriptionTarget
     {
         RobotState RobotState { get; set; }
         float ObstacleDistance { get; set; }

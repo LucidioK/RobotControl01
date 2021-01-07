@@ -1,6 +1,6 @@
 ﻿namespace RobotControl.Net
 {
-    internal interface IRobotLogic : IPublishTarget
+    internal interface IRobotLogic : IPublishTarget, ISubscriptionTarget
     {
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace RobotControl.Net
 {
-    interface IMediator : IPublishTarget
+    public interface IMediator : IPublishTarget
     {
     }
 }

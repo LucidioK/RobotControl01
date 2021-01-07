@@ -14,16 +14,22 @@ namespace RobotControl.Net
 
     public class ObjectDetector : IObjectDetector
     {
+        private readonly bool fake;
         private readonly TinyYoloModel tinyYoloModel;
         private readonly OnnxModelConfigurator onnxModelConfigurator;
         private readonly OnnxOutputParser onnxOutputParser;
         private readonly PredictionEngine<ImageInputData, TinyYoloPrediction> tinyYoloPredictionEngine;
+        private readonly string[] labelsOfObjectsToDetect;
 
         public int ImageWidth => ImageSettings.imageWidth;
         public int ImageHeight => ImageSettings.imageHeight;
+        public static string[] AvailableLabels => TinyYoloModel.AvailableLabels;
+        public EventName[] HandledEvents => new EventName[]{ EventName.NewImageDetected };
 
-        public ObjectDetector(string onnxFilePath)
+        public ObjectDetector(bool fake, string onnxFilePath, string[] labelsOfObjectsToDetect)
         {
+            this.fake = fake;
+            this.labelsOfObjectsToDetect = labelsOfObjectsToDetect;
             tinyYoloModel = new TinyYoloModel(onnxFilePath);
             onnxModelConfigurator = new OnnxModelConfigurator(tinyYoloModel);
             onnxOutputParser = new OnnxOutputParser(tinyYoloModel);
@@ -36,10 +42,47 @@ namespace RobotControl.Net
             var labels = prediction.PredictedLabels;
             var boundingBoxes = onnxOutputParser.ParseOutputs(labels);
             var filteredBoxes = onnxOutputParser.FilterBoundingBoxes(boundingBoxes, 5, 0.5f);
-            pubSub.Publish(new EventDescriptor { Name = EventName.ObjectDetected, Detail = JsonConvert.SerializeObject(filteredBoxes) });
+            if (filteredBoxes.Count == 0)
+            {
+                return null;
+            }
+            filteredBoxes = filteredBoxes.Where(b => labelsOfObjectsToDetect.Any(l => l.Equals(b.Label, StringComparison.InvariantCultureIgnoreCase))).ToList();
+            if (filteredBoxes.Count == 0)
+            {
+                return null;
+            }
+            var highestConfidence = filteredBoxes.Select(b => b.Confidence).Max();
+            var highestConfidenceBox = filteredBoxes.First(b => b.Confidence == highestConfidence);
+            DisplayDetectedObjects(bitmap, highestConfidenceBox);
+            var bbdfb = BoundingBoxDeltaFromBitmap.FromBitmap(bitmap, highestConfidenceBox);
+            pubSub.Publish(new EventDescriptor { Name = EventName.ObjectDetected, Detail = JsonConvert.SerializeObject(bbdfb), Value = bbdfb.XDeltaProportionFromBitmapCenter });
             return filteredBoxes.ToArray();
         }
 
+        private static void DisplayDetectedObjects(Bitmap bitmap, BoundingBox box)
+        {
+            Console.WriteLine(DateTime.Now);
+            var bbdfb = BoundingBoxDeltaFromBitmap.FromBitmap(bitmap, box);
+
+            var x = box.Dimensions.X * bbdfb.CorrX;
+            var y = box.Dimensions.Y * bbdfb.CorrY;
+            var w = box.Dimensions.Width * bbdfb.CorrX;
+            var h = box.Dimensions.Height * bbdfb.CorrY;
+            var midX = x + (w / 2);
+            var midY = y + (h / 2);
+            if (w != 0)
+            {
+                using (var gr = Graphics.FromImage(bitmap))
+                {
+                    gr.DrawRectangle(new Pen(Color.Red, 3), x, y, w, h);
+                    gr.DrawLine(new Pen(Color.Green, 2), 0, midY, bitmap.Width - 1, midY);
+                    gr.DrawLine(new Pen(Color.Green, 2), midX, 0, midX, bitmap.Height - 1);
+                }
+            }
+            Console.WriteLine($"{box.Label} {(int)(box.Confidence * 100)}% bitmap width: {bitmap.Width} Box X:{(int)box.Dimensions.X} Box Width: {(int)box.Dimensions.Width} position: {bbdfb.XDeltaProportionFromBitmapCenter}");
+
+            bitmap.Save("captured.bmp");
+        }
 
         private PubSub pubSub = new PubSub();
         public void Subscribe(IPublishTarget publisherTarget) => pubSub.Subscribe(publisherTarget);
@@ -63,6 +106,40 @@ namespace RobotControl.Net
             public float Y { get; set; }
             public float Height { get; set; }
             public float Width { get; set; }
+        }
+
+        public class BoundingBoxDeltaFromBitmap
+        {
+            private BoundingBoxDeltaFromBitmap() { }
+            public float CorrX { get;  private set; }
+            public float CorrY { get;  private set; }
+            public float BitmapWidth { get;  private set; }
+            public float BitmapHeight { get;  private set; }
+            public float XDeltaFromBitmapCenter { get;  private set; }
+            public float YDeltaFromBitmapCenter { get;  private set; }
+            public float XDeltaProportionFromBitmapCenter { get => BitmapWidth  > 0 ? XDeltaFromBitmapCenter / BitmapWidth  : 0; }
+            public float YDeltaProportionFromBitmapCenter { get => BitmapHeight > 0 ? YDeltaFromBitmapCenter / BitmapHeight : 0; }
+
+            public static BoundingBoxDeltaFromBitmap FromBitmap(Bitmap bitmap, BoundingBox box)
+            {
+                var bbdfb = new BoundingBoxDeltaFromBitmap()
+                {
+                    BitmapWidth = bitmap.Width,
+                    BitmapHeight = bitmap.Height,
+                    CorrX = (float)bitmap.Width / ImageSettings.imageWidth,
+                    CorrY = (float)bitmap.Height / ImageSettings.imageHeight,
+                };
+
+                var midXImg = bitmap.Width / 2;
+                var midXBox = (box.Dimensions.X * bbdfb.CorrX) + (box.Dimensions.Width * bbdfb.CorrX / 2);
+                bbdfb.XDeltaFromBitmapCenter = midXBox - midXImg;
+
+                var midYImg = bitmap.Height / 2;
+                var midYBox = (box.Dimensions.Y * bbdfb.CorrY) + (box.Dimensions.Height * bbdfb.CorrY / 2);
+                bbdfb.YDeltaFromBitmapCenter = midYBox - midYImg;
+
+                return bbdfb;
+            }
         }
 
         public class BoundingBox
@@ -116,10 +193,21 @@ namespace RobotControl.Net
 
             private ITransformer SetupMlNetModel(IOnnxModel onnxModel) =>
                 mlContext
-                    .Transforms.ResizeImages(resizing: ImageResizingEstimator.ResizingKind.Fill, outputColumnName: onnxModel.ModelInput, imageWidth: ImageSettings.imageWidth, imageHeight: ImageSettings.imageHeight, inputColumnName: nameof(ImageInputData.Image))
-                               .Append(mlContext.Transforms.ExtractPixels(outputColumnName: onnxModel.ModelInput))
-                               .Append(mlContext.Transforms.ApplyOnnxModel(modelFile: onnxModel.ModelPath, outputColumnName: onnxModel.ModelOutput, inputColumnName: onnxModel.ModelInput))
-                               .Fit(mlContext.Data.LoadFromEnumerable(new List<ImageInputData>()));
+                    .Transforms
+                        .ResizeImages(
+                            resizing: ImageResizingEstimator.ResizingKind.Fill,
+                            outputColumnName: onnxModel.ModelInput,
+                            imageWidth: ImageSettings.imageWidth,
+                            imageHeight: ImageSettings.imageHeight,
+                            inputColumnName: nameof(ImageInputData.Image))
+                        .Append(mlContext.Transforms.ExtractPixels(
+                            outputColumnName: onnxModel.ModelInput))
+                        .Append(mlContext.Transforms.ApplyOnnxModel(
+                            modelFile       : onnxModel.ModelPath,
+                            outputColumnName: onnxModel.ModelOutput,
+                            inputColumnName : onnxModel.ModelInput))
+                        .Fit(
+                            mlContext.Data.LoadFromEnumerable(new List<ImageInputData>()));
 
             public PredictionEngine<ImageInputData, T> GetMlNetPredictionEngine<T>()
                 where T : class, IOnnxObjectPrediction, new() => mlContext.Model.CreatePredictionEngine<ImageInputData, T>(mlModel);
@@ -326,7 +414,9 @@ namespace RobotControl.Net
             public string ModelInput { get; } = "image";
             public string ModelOutput { get; } = "grid";
 
-            public string[] Labels { get; } =
+            public string[] Labels => AvailableLabels;
+
+            public static string[] AvailableLabels =
             {
                 "aeroplane", "bicycle", "bird", "boat", "bottle",
                 "bus", "car", "cat", "chair", "cow",

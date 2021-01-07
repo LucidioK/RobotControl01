@@ -4,7 +4,6 @@
     using OpenCvSharp.Extensions;
 
     using System;
-    using System.Collections.Concurrent;
     using System.Drawing;
     using System.IO;
     using System.Threading;
@@ -44,17 +43,19 @@
 
         private void CameraCaptureLoopThread()
         {
-            Console.Clear();
-
             StartCapture();
             var frame = new Mat();
             while ((frame = ReadFromCapturer()) != null)
             {
-                if (videoCapture.Read(frame) && Monitor.TryEnter(latestBitmapLock))
+                if (Monitor.TryEnter(latestBitmapLock))
                 {
                     latestBitmap = BitmapConverter.ToBitmap(frame.Flip(FlipMode.Y));
                     fresh = true;
-                    pubSub.Publish(new EventDescriptor { Name = EventName.NewImageDetected, Bitmap = latestBitmap });
+                    pubSub.Publish(new EventDescriptor
+                    {
+                        Name = EventName.NewImageDetected,
+                        Bitmap = latestBitmap
+                    });
                 }
             }
         }
@@ -66,7 +67,8 @@
             if (frame.Empty() && fake)
             {
                 videoCapture.Release();
-
+                StartFakeCapture();
+                videoCapture.Read(frame);
             }
 
             if (frame.Empty() && !fake)
@@ -75,21 +77,6 @@
             }
 
             return frame;
-        }
-
-        private bool IsVideoCaptureOpened()
-        {
-            
-            if (fake) 
-            { 
-                videoCapture.
-            }
-            else
-            {
-                return videoCapture.IsOpened();
-            }
-                
-
         }
 
         private void StartCapture()

@@ -26,8 +26,9 @@ namespace RobotControl.Net
         };
 
 
-        public SpeechCommandListener(IState state)
+        public SpeechCommandListener(bool fake, IState state)
         {
+            this.fake = fake;
             this.state = state;
             foreach (var command in commands) grammarBuilder.Append(command);
 
@@ -52,6 +53,8 @@ namespace RobotControl.Net
                 }
             }
         }
+
+        private readonly bool fake;
         IState state;
         private PubSub pubSub = new PubSub();
         public void Subscribe(IPublishTarget publisherTarget) => pubSub.Subscribe(publisherTarget);

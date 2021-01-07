@@ -14,7 +14,7 @@ namespace RobotControl.Net
         {
             try
             {
-                serialPort = new SerialPort($"COM{portNumber}", 9600);
+                serialPort = new SerialPort($"COM{portNumber}");
                 serialPort.Open();
                 return true;
             }

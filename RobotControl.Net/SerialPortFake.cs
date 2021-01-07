@@ -1,34 +1,46 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+
+using System;
 using System.Collections.Generic;
-using System.IO.Ports;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace RobotControl.Net
 {
-    class SerialPortImpl : ISerialPort
+    class SerialPortFake : ISerialPort
     {
-        SerialPort serialPort;
-        public bool Open(int portNumber)
+        private readonly string FakeSerialPortPath = "FakeSerialPort.json";
+        private readonly int count;
+        private int position = 0;
+        List<string> fakeData;
+        public SerialPortFake()
         {
-            try
+            if (File.Exists(FakeSerialPortPath))
             {
-                serialPort = new SerialPort($"COM{portNumber}", 9600);
-                serialPort.Open();
-                return true;
+                JsonConvert
+                    .DeserializeObject<List<RobotData>>(
+                        File.ReadAllText(FakeSerialPortPath))
+                    .ForEach(r => fakeData.Add(JsonConvert.SerializeObject(r)));
             }
-            catch (Exception)
+            else
             {
-                serialPort = null;
-                return false;
+                throw new Exception($"Cannot find file {FakeSerialPortPath}");
             }
+            count = (int)fakeData.Count;
         }
 
-        public string ReadExisting() => serialPort?.ReadExisting();
+        public bool Open(int portNumber) => true;
 
-        public string ReadLine() => serialPort?.ReadLine();
 
-        public void Write(string s) => serialPort?.Write(s);
+        public string ReadExisting()     => 
+            fakeData[NextPosition()];
+
+        public string ReadLine()         => 
+            ReadExisting();
+
+        public void Write(string s)      => 
+            Console.WriteLine($"{nameof(SerialPortFake)} would have written {s}");
+
+        private int NextPosition()       => 
+            (position = position < count - 1 ? position + 1 : 0);
     }
 }

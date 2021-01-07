@@ -14,6 +14,7 @@ namespace RobotControl.Net
 
         public Speaker() => synth.SetOutputToDefaultAudioDevice();
 
+        public EventName[] HandledEvents => new EventName[] { EventName.PleaseSay };
 
         public void OnEvent(IEventDescriptor eventDescriptor)
         {

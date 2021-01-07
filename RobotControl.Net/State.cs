@@ -5,6 +5,18 @@ namespace RobotControl.Net
 
     using System;
 
+    class RobotData
+    {
+        public float accelX { get; set; }
+        public float accelY { get; set; }
+        public float accelZ { get; set; }
+        public float compass { get; set; }
+        public float distance { get; set; }
+        public float voltage { get; set; }
+        public float uv { get; set; }
+        public string status { get; set; }
+    }
+
     class State : IState
     {
         private RobotState robotState;
@@ -15,21 +27,7 @@ namespace RobotControl.Net
         private float yAcceleration;
         private float zAcceleration;
         private float compassHeading;
-        private PubSub pubSub     = new PubSub();
         private object lockObject = new object();
-
-
-        class RobotData
-        {
-            public float accelX { get; set; }
-            public float accelY { get; set; }
-            public float accelZ { get; set; }
-            public float compass { get; set; }
-            public float distance { get; set; }
-            public float voltage { get; set; }
-            public float uv { get; set; }
-            public float status { get; set; }
-        }
 
         public RobotState RobotState
         {
@@ -53,6 +51,21 @@ namespace RobotControl.Net
             }
         }
 
+        private PubSub pubSub = new PubSub();
+        public void Subscribe(IPublishTarget publisherTarget) => pubSub.Subscribe(publisherTarget);
+
+        static public State FromRobotData(RobotData data) =>
+            new State
+            {
+                BatteryVoltage = data.voltage,
+                CompassHeading = data.compass,
+                ObstacleDistance = data.distance,
+                UVLevel = data.uv,
+                XAcceleration = data.accelX,
+                YAcceleration = data.accelY,
+                ZAcceleration = data.accelZ,
+            };
+
         public float ObstacleDistance { get { lock(lockObject) { return obstacleDistance; }} set { lock(lockObject) { obstacleDistance = value; }}}
         public float UVLevel          { get { lock(lockObject) { return uVLevel         ; }} set { lock(lockObject) { uVLevel          = value; }}}
         public float BatteryVoltage   { get { lock(lockObject) { return batteryVoltage  ; }} set { lock(lockObject) { batteryVoltage   = value; }}}
@@ -60,22 +73,33 @@ namespace RobotControl.Net
         public float YAcceleration    { get { lock(lockObject) { return yAcceleration   ; }} set { lock(lockObject) { yAcceleration    = value; }}}
         public float ZAcceleration    { get { lock(lockObject) { return zAcceleration   ; }} set { lock(lockObject) { zAcceleration    = value; }}}
         public float CompassHeading   { get { lock(lockObject) { return compassHeading  ; }} set { lock(lockObject) { compassHeading   = value; }}}
+        public EventName[] HandledEvents => new EventName[] { EventName.RawRobotDataDetected };
 
         public void OnEvent(IEventDescriptor eventDescriptor)
         {
-            if (eventDescriptor.Name == EventName.RobotDataDetected)
+            if (eventDescriptor.Name == EventName.RawRobotDataDetected)
             {
                 RobotData robotData;
                 try
                 {
-                    robotData = JsonConvert.DeserializeObject<RobotData>(eventDescriptor.Detail);
-                    this.BatteryVoltage = robotData.voltage;
-                    this.CompassHeading = robotData.compass;
+                    robotData             = JsonConvert.DeserializeObject<RobotData>(eventDescriptor.Detail);
+                    if (!string.IsNullOrEmpty(robotData.status))
+                    {
+                        Console.WriteLine($"Robot returned status [{robotData.status}]");
+                    }
+                    this.BatteryVoltage   = robotData.voltage;
+                    this.CompassHeading   = robotData.compass;
                     this.ObstacleDistance = robotData.distance;
-                    this.UVLevel = robotData.uv;
-                    this.XAcceleration = robotData.accelX;
-                    this.YAcceleration = robotData.accelY;
-                    this.ZAcceleration = robotData.accelZ;
+                    this.UVLevel          = robotData.uv;
+                    this.XAcceleration    = robotData.accelX;
+                    this.YAcceleration    = robotData.accelY;
+                    this.ZAcceleration    = robotData.accelZ;
+                    pubSub.Publish(new EventDescriptor
+                    {
+                        Name = EventName.RobotData,
+                        State = this,
+                    });
+
                 }
                 catch (Exception) { }
             }

@@ -357,6 +357,7 @@
     <Compile Include="IRobotCommunicationHandler.cs" />
     <Compile Include="IRobotLogic.cs" />
     <Compile Include="ISerialPort.cs" />
+    <Compile Include="ISpeaker.cs" />
     <Compile Include="ISpeechCommandListener.cs" />
     <Compile Include="IState.cs" />
     <Compile Include="IStrategy.cs" />

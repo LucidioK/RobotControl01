@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RobotControl.Net", "RobotCo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReadSerial", "ReadSerial\ReadSerial.csproj", "{7990644B-59BE-4C2D-B290-30F8FA8EABD5}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RobotControl02", "RobotControl02\RobotControl02.csproj", "{CA7C7D97-6543-442E-823D-6685C0CE341B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,14 +35,22 @@ Global
 		{6E46E2D8-942C-4505-AA66-CBD90F966A27}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6E46E2D8-942C-4505-AA66-CBD90F966A27}.Release|x64.ActiveCfg = Release|x64
 		{6E46E2D8-942C-4505-AA66-CBD90F966A27}.Release|x64.Build.0 = Release|x64
-		{7990644B-59BE-4C2D-B290-30F8FA8EABD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7990644B-59BE-4C2D-B290-30F8FA8EABD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7990644B-59BE-4C2D-B290-30F8FA8EABD5}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{7990644B-59BE-4C2D-B290-30F8FA8EABD5}.Debug|x64.Build.0 = Debug|Any CPU
+		{7990644B-59BE-4C2D-B290-30F8FA8EABD5}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{7990644B-59BE-4C2D-B290-30F8FA8EABD5}.Debug|Any CPU.Build.0 = Debug|x64
+		{7990644B-59BE-4C2D-B290-30F8FA8EABD5}.Debug|x64.ActiveCfg = Debug|x64
+		{7990644B-59BE-4C2D-B290-30F8FA8EABD5}.Debug|x64.Build.0 = Debug|x64
 		{7990644B-59BE-4C2D-B290-30F8FA8EABD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7990644B-59BE-4C2D-B290-30F8FA8EABD5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7990644B-59BE-4C2D-B290-30F8FA8EABD5}.Release|x64.ActiveCfg = Release|Any CPU
 		{7990644B-59BE-4C2D-B290-30F8FA8EABD5}.Release|x64.Build.0 = Release|Any CPU
+		{CA7C7D97-6543-442E-823D-6685C0CE341B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA7C7D97-6543-442E-823D-6685C0CE341B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA7C7D97-6543-442E-823D-6685C0CE341B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CA7C7D97-6543-442E-823D-6685C0CE341B}.Debug|x64.Build.0 = Debug|Any CPU
+		{CA7C7D97-6543-442E-823D-6685C0CE341B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA7C7D97-6543-442E-823D-6685C0CE341B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA7C7D97-6543-442E-823D-6685C0CE341B}.Release|x64.ActiveCfg = Release|Any CPU
+		{CA7C7D97-6543-442E-823D-6685C0CE341B}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

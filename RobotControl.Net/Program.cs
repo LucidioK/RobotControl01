@@ -19,8 +19,11 @@ namespace RobotControl.Net
         static ISpeechCommandListener       speechCommandListener    ;
         static IRobotCommunicationHandler   robotCommunicationHandler;
         static IRobotLogic                  robotLogic               ;
+        static ISpeaker                     speaker                  ;
+
         //static ConcurrentQueue<IEventDescriptor> eventDescriptors       ;
         static ConcurrentQueue<IPubSubBase> publishersAndSubscribers ;
+
         //static ChainOfResponsibility             chainOfResponsibility;
         static IMediator                          mediator;
         private static bool UseFakeObjectDetector = false;
@@ -29,6 +32,7 @@ namespace RobotControl.Net
         private static bool UseFakeRobotCommunicationHandler = false;
         private static bool UseFakeRobotLogic = false;
         private static string[] LabelsOfObjectsToDetect;
+        private static PubSub pubSub = new PubSub();
 
         static void Main(string[] args)
         {
@@ -38,12 +42,11 @@ namespace RobotControl.Net
 
             state                    = new State();
             objectDetector           = new ObjectDetector(UseFakeObjectDetector, "TinyYolo2_model.onnx", LabelsOfObjectsToDetect);
-
             cameraCapturer           = new CameraCapturer(UseFakeCameraCapturer);
             speechCommandListener    = new SpeechCommandListener(UseFakeSpeechCommandListener, state);
             robotCommunicationHandler= new RobotCommunicationHandler(serialPort);
-
             robotLogic               = new RobotLogic(UseFakeRobotLogic, state);
+            speaker                  = new Speaker();
 
             publishersAndSubscribers = new ConcurrentQueue<IPubSubBase>();
 
@@ -53,8 +56,10 @@ namespace RobotControl.Net
             publishersAndSubscribers.Enqueue((IPubSubBase)objectDetector);
             publishersAndSubscribers.Enqueue((IPubSubBase)cameraCapturer);
             publishersAndSubscribers.Enqueue((IPubSubBase)speechCommandListener);
+            publishersAndSubscribers.Enqueue((IPubSubBase)speaker);
             mediator = new Mediator(publishersAndSubscribers);
 
+            pubSub.Publish(new EventDescriptor { Name = EventName.PleaseSay, Detail = "Robot is Ready." });
             //eventDescriptors.Enqueue((IEventDescriptor)objectDetector);
             //eventDescriptors.Enqueue((IEventDescriptor)cameraCapturer);
             //eventDescriptors.Enqueue((IEventDescriptor)robotReader);

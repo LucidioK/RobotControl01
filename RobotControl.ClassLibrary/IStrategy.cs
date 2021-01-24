@@ -1,6 +1,6 @@
 ﻿namespace RobotControl.Net
 {
-    interface IStrategy
+    public interface IStrategy
     {
         IEventDescriptor Run(IEventDescriptor eventDescriptor);
     }

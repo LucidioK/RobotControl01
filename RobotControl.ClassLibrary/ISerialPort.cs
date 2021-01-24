@@ -1,6 +1,6 @@
 ﻿namespace RobotControl.Net
 {
-    interface ISerialPort
+    public interface ISerialPort
     {
 
         bool Open(int portNumber);

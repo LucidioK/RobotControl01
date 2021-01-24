@@ -1,7 +1,7 @@
 ﻿namespace RobotControl.Net
 {
-    public interface IPubSubBase 
-    { 
+    public interface IPubSubBase
+    {
 
     }
 

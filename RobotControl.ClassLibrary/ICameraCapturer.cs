@@ -2,7 +2,7 @@
 
 namespace RobotControl.Net
 {
-    internal interface ICameraCapturer: ISubscriptionTarget
+    public interface ICameraCapturer: ISubscriptionTarget
     {
         Bitmap GetLatestBitmap();
     }

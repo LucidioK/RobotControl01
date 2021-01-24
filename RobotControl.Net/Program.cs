@@ -13,57 +13,24 @@ namespace RobotControl.Net
 
     class Program
     {
-        static IState                       state                    ;
-        static IObjectDetector              objectDetector           ;
-        static ICameraCapturer              cameraCapturer           ;
-        static ISpeechCommandListener       speechCommandListener    ;
-        static IRobotCommunicationHandler   robotCommunicationHandler;
-        static IRobotLogic                  robotLogic               ;
-        static ISpeaker                     speaker                  ;
-
-        //static ConcurrentQueue<IEventDescriptor> eventDescriptors       ;
-        static ConcurrentQueue<IPubSubBase> publishersAndSubscribers ;
-
-        //static ChainOfResponsibility             chainOfResponsibility;
-        static IMediator                          mediator;
         private static bool UseFakeObjectDetector = false;
         private static bool UseFakeCameraCapturer = false;
         private static bool UseFakeSpeechCommandListener = false;
         private static bool UseFakeRobotCommunicationHandler = false;
         private static bool UseFakeRobotLogic = false;
         private static string[] LabelsOfObjectsToDetect;
-        private static PubSub pubSub = new PubSub();
-
+        private static RobotControl RobotControl;
         static void Main(string[] args)
         {
             HandleArgs(args);
 
-            ISerialPort serialPort   = UseFakeRobotCommunicationHandler ? (ISerialPort)new SerialPortFake() : new SerialPortImpl();
+            RobotControl = new RobotControl(LabelsOfObjectsToDetect,
+                UseFakeObjectDetector,
+                UseFakeCameraCapturer,
+                UseFakeSpeechCommandListener,
+                UseFakeRobotCommunicationHandler,
+                UseFakeRobotLogic);
 
-            state                    = new State();
-            objectDetector           = new ObjectDetector(UseFakeObjectDetector, "TinyYolo2_model.onnx", LabelsOfObjectsToDetect);
-            cameraCapturer           = new CameraCapturer(UseFakeCameraCapturer);
-            speechCommandListener    = new SpeechCommandListener(UseFakeSpeechCommandListener, state);
-            robotCommunicationHandler= new RobotCommunicationHandler(serialPort);
-            robotLogic               = new RobotLogic(UseFakeRobotLogic, state);
-            speaker                  = new Speaker();
-
-            publishersAndSubscribers = new ConcurrentQueue<IPubSubBase>();
-
-            publishersAndSubscribers.Enqueue((IPubSubBase)robotCommunicationHandler);
-            publishersAndSubscribers.Enqueue((IPubSubBase)robotLogic);
-            publishersAndSubscribers.Enqueue((IPubSubBase)state);
-            publishersAndSubscribers.Enqueue((IPubSubBase)objectDetector);
-            publishersAndSubscribers.Enqueue((IPubSubBase)cameraCapturer);
-            publishersAndSubscribers.Enqueue((IPubSubBase)speechCommandListener);
-            publishersAndSubscribers.Enqueue((IPubSubBase)speaker);
-            mediator = new Mediator(publishersAndSubscribers);
-
-            pubSub.Publish(new EventDescriptor { Name = EventName.PleaseSay, Detail = "Robot is Ready." });
-            //eventDescriptors.Enqueue((IEventDescriptor)objectDetector);
-            //eventDescriptors.Enqueue((IEventDescriptor)cameraCapturer);
-            //eventDescriptors.Enqueue((IEventDescriptor)robotReader);
-            //chainOfResponsibility = new ChainOfResponsibility(eventDescriptors);
             while (true) { Thread.Sleep(10); }
         }
 

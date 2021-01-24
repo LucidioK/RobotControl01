@@ -20,6 +20,7 @@ namespace RobotControl.Net
             }
             catch (Exception)
             {
+                serialPort?.Close();
                 serialPort = null;
                 return false;
             }

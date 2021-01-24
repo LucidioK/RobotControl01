@@ -1,0 +1,62 @@
+﻿<Window x:Class="RobotControl.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RobotControl.UI"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="573" Width="800" Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}">
+    <Grid Margin="0,16,0,-19.5">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="5*"/>
+            <ColumnDefinition Width="154*"/>
+            <ColumnDefinition Width="636*"/>
+        </Grid.ColumnDefinitions>
+        <CheckBox x:Name="checkBoxAeroplane"   Content="Aeroplane"   HorizontalAlignment="Left" Margin="10,32,0,0"  VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxAeroplane_Checked"/>
+        <CheckBox x:Name="checkBoxBicycle"     Content="Bicycle"     HorizontalAlignment="Left" Margin="10,52,0,0"  VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxBicycle_Checked"/>
+        <CheckBox x:Name="checkBoxBird"        Content="Bird"        HorizontalAlignment="Left" Margin="10,72,0,0"  VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxBird_Checked"/>
+        <CheckBox x:Name="checkBoxBoat"        Content="Boat"        HorizontalAlignment="Left" Margin="10,92,0,0" VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxBoat_Checked"/>
+        <CheckBox x:Name="checkBoxBottle"      Content="Bottle"      HorizontalAlignment="Left" Margin="10,112,0,0" VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxBottle_Checked"/>
+        <CheckBox x:Name="checkBoxBus"         Content="Bus"         HorizontalAlignment="Left" Margin="10,132,0,0" VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxBus_Checked"/>
+        <CheckBox x:Name="checkBoxCar"         Content="Car"         HorizontalAlignment="Left" Margin="10,152,0,0" VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxCar_Checked"/>
+        <CheckBox x:Name="checkBoxCat"         Content="Cat"         HorizontalAlignment="Left" Margin="10,172,0,0" VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxCat_Checked"/>
+        <CheckBox x:Name="checkBoxChair"       Content="Chair"       HorizontalAlignment="Left" Margin="10,192,0,0" VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxChair_Checked"/>
+        <CheckBox x:Name="checkBoxCow"         Content="Cow"         HorizontalAlignment="Left" Margin="10,212,0,0" VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxCow_Checked"/>
+        <CheckBox x:Name="checkBoxDiningtable" Content="Diningtable" HorizontalAlignment="Left" Margin="10,232,0,0" VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxDiningtable_Checked"/>
+        <CheckBox x:Name="checkBoxDog"         Content="Dog"         HorizontalAlignment="Left" Margin="10,252,0,0" VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxDog_Checked"/>
+        <CheckBox x:Name="checkBoxHorse"       Content="Horse"       HorizontalAlignment="Left" Margin="10,272,0,0" VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxHorse_Checked"/>
+        <CheckBox x:Name="checkBoxMotorbike"   Content="Motorbike"   HorizontalAlignment="Left" Margin="10,292,0,0" VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxMotorbike_Checked"/>
+        <CheckBox x:Name="checkBoxPerson"      Content="Person"      HorizontalAlignment="Left" Margin="10,312,0,0" VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxPerson_Checked"/>
+        <CheckBox x:Name="checkBoxPottedplant" Content="Pottedplant" HorizontalAlignment="Left" Margin="10,332,0,0" VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxPottedplant_Checked"/>
+        <CheckBox x:Name="checkBoxSheep"       Content="Sheep"       HorizontalAlignment="Left" Margin="10,352,0,0" VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxSheep_Checked"/>
+        <CheckBox x:Name="checkBoxSofa"        Content="Sofa"        HorizontalAlignment="Left" Margin="10,372,0,0" VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxSofa_Checked"/>
+        <CheckBox x:Name="checkBoxTrain"       Content="Train"       HorizontalAlignment="Left" Margin="10,392,0,0" VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxTrain_Checked"/>
+        <CheckBox x:Name="checkBoxTvmonitor"   Content="Tvmonitor"   HorizontalAlignment="Left" Margin="10,412,0,0" VerticalAlignment="Top" Grid.Column="1" Checked="checkBoxTvmonitor_Checked"/>
+        <Label x:Name="label" Content="Objects to detect:" Grid.Column="1" HorizontalAlignment="Left" Height="25" Margin="5,2,0,0" VerticalAlignment="Top" Width="108"/>
+        <Button x:Name="startStop" Content="Start" Grid.Column="1" HorizontalAlignment="Left" Height="26" Margin="10,432,0,0" VerticalAlignment="Top" Width="134" Click="startStop_Click" IsEnabled="False"/>
+        <Label x:Name="label1" Content="Distance:" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="26,10,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="label1_Copy" Content="AccelX:" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="26,25,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="label1_Copy1" Content="AccelY:" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="26,41,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="label1_Copy2" Content="AccelZ:" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="26,56,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="label1_Copy3" Content="Compass:" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="26,70,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="lblDistance" Content="__di__" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,10,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="lblCompass" Content="__co__" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,70,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="lblAccelZ" Content="__az__" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,56,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="lblAccelY" Content="__ay__" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,41,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="lblAccelX" Content="__ax___" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,25,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="label1_Copy4" Content="Voltage:" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="26,85,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="lblVoltage" Content="__vo__" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,85,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="label1_Copy5" Content="MotorL:" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="26,116,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="lblMotorL" Content="__ml__" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,116,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="label1_Copy6" Content="MotorR:" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="26,100,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="lblMotorR" Content="__mr__" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,100,0,0" VerticalAlignment="Top" Width="70"/>
+        <Image x:Name="objectDetectionImage" Grid.Column="2" HorizontalAlignment="Left" Height="224" Margin="26,300,0,0" VerticalAlignment="Top" Width="359" />
+        <Label x:Name="label1_Copy7" Content="Latest cmd:" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="26,131,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="lblLatestCommand" Content="__lc__" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,131,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="label1_Copy8" Content="Please say:" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="26,147,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="lblPleaseSay" Content="__ps__" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,147,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="label1_Copy9" Content="Object data:" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="26,164,0,0" VerticalAlignment="Top" Width="75"/>
+        <Label x:Name="lblObjectData" Content="__od__" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,164,0,0" VerticalAlignment="Top" Width="70"/>
+        <Image x:Name="webCamImage" Grid.Column="2" HorizontalAlignment="Left" Height="91" Margin="26,196,0,0" VerticalAlignment="Top" Width="134"/>
+    </Grid>
+</Window>

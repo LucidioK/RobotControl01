@@ -10,6 +10,7 @@ namespace RobotControl.Net
     using System;
     using System.Collections.Generic;
     using System.Drawing;
+    using System.IO;
     using System.Linq;
 
     public class ObjectDetector : IObjectDetector
@@ -55,7 +56,13 @@ namespace RobotControl.Net
             var highestConfidenceBox = filteredBoxes.First(b => b.Confidence == highestConfidence);
             DisplayDetectedObjects(bitmap, highestConfidenceBox);
             var bbdfb = BoundingBoxDeltaFromBitmap.FromBitmap(bitmap, highestConfidenceBox);
-            pubSub.Publish(new EventDescriptor { Name = EventName.ObjectDetected, Detail = JsonConvert.SerializeObject(bbdfb), Value = bbdfb.XDeltaProportionFromBitmapCenter });
+            pubSub.Publish(new EventDescriptor
+            {
+                Name   = EventName.ObjectDetected,
+                Detail = JsonConvert.SerializeObject(bbdfb),
+                Value  = bbdfb.XDeltaProportionFromBitmapCenter,
+                Bitmap = bitmap
+            }); ;
             return filteredBoxes.ToArray();
         }
 
@@ -428,7 +435,14 @@ namespace RobotControl.Net
 
             public TinyYoloModel(string modelPath)
             {
-                ModelPath = modelPath;
+                if (File.Exists(modelPath))
+                {
+                    ModelPath = Path.GetFullPath(modelPath);
+                }
+                else
+                {
+                    throw new FileNotFoundException(modelPath);
+                }
             }
         }
 

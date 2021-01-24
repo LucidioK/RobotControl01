@@ -39,5 +39,9 @@ namespace RobotControl.Net
 
         private bool Implements(object o, string interfaceName) =>
             o.GetType().GetInterface(interfaceName) != null;
+
+        public void Subscribe(IPublishTarget target) =>
+            publishTargets.Enqueue(target);
+
     }
 }

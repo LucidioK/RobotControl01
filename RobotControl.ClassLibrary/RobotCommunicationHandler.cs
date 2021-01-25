@@ -3,55 +3,46 @@
 namespace RobotControl.Net
 {
     using System;
-    using System.IO.Ports;
     using System.Threading;
 
     internal class RobotCommunicationHandler : IRobotCommunicationHandler
     {
         ISerialPort serialPort;
         public EventName[] HandledEvents => new EventName[] { EventName.NeedToMoveDetected };
-        public RobotCommunicationHandler(ISerialPort serialPort)
+        public RobotCommunicationHandler(ISerialPort serialPort, int baudRate)
         {
             this.serialPort = serialPort;
 
             bool foundPort = false;
-            while (!foundPort)
+            for (int i = 0; i < 4 && !foundPort; i++)
             {
-                for (int i = 1; i < 32 && !foundPort; i++)
+                for (int j = 1; j < 32 && !foundPort; j++)
                 {
-                    if (serialPort.Open(i))
+                    if (this.serialPort.Open(j, baudRate, OnValidDataReceivedCallback))
                     {
-                        string s = serialPort.ReadLine().Trim(trimChars: new char[] { ' ', '\r', '\n' , '\t'});
-                        if (s.StartsWith("{") && s.EndsWith("}"))
-                        {
-                            foundPort = true;
-                        }
+                        foundPort = true;
                     }
                 }
 
-                Thread.Sleep(500);
+                Thread.Sleep(100);
             }
 
             if (!foundPort)
             {
-                throw new Exception("Could not find serial port...");
+                throw new Exception("Could not find serial port. Open the Arduino IDE, then open Tools/Serial Monitor and close the monitor...");
             }
-
-            thread = new Thread(new ThreadStart(RobotListenerThread));
-            thread.Start();
         }
 
-        private void RobotListenerThread()
+        private void OnValidDataReceivedCallback(string s)
         {
-            while (true)
+            s = GetValidatedString(s);
+            if (s != null)
             {
-                var s = serialPort.ReadLine();
                 pubSub.Publish(new EventDescriptor { Name = EventName.RawRobotDataDetected, Detail = s });
             }
         }
 
         private PubSub pubSub = new PubSub();
-        private readonly Thread thread;
 
         public void Subscribe(IPublishTarget publisherTarget) => pubSub.Subscribe(publisherTarget);
 
@@ -65,6 +56,16 @@ namespace RobotControl.Net
                 default:
                     return;
             }
+        }
+
+        private static string GetValidatedString(string s)
+        {
+            s = s.Trim(trimChars: new char[] { ' ', '\r', '\n', '\t' });
+            if (s != null && s.StartsWith("{") && s.EndsWith("}"))
+            {
+                return s;
+            }
+            return null;
         }
     }
 }

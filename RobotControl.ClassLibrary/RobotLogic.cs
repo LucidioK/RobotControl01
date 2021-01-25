@@ -83,7 +83,7 @@ namespace RobotControl.Net
 
         private void startChargingProcedure()
         {
-            throw new NotImplementedException();
+            // TODO: "-->IMPORTANT: {nameof(RobotLogic)}.{nameof(startChargingProcedure)} not yet implemented!");
         }
 
         private void turnOrMove(IEventDescriptor eventDescriptor)

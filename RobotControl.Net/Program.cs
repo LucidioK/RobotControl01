@@ -23,8 +23,8 @@ namespace RobotControl.Net
         static void Main(string[] args)
         {
             HandleArgs(args);
-
             RobotControl = new RobotControl(LabelsOfObjectsToDetect,
+                115200,
                 UseFakeObjectDetector,
                 UseFakeCameraCapturer,
                 UseFakeSpeechCommandListener,

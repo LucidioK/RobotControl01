@@ -27,25 +27,26 @@ namespace RobotControl.Net
 
         public RobotControl(
             string[] labelsOfObjectsToDetect,
-            bool UseFakeObjectDetector = false,
-            bool UseFakeCameraCapturer = false,
-            bool UseFakeSpeechCommandListener = false,
+            int baudRate,
+            bool UseFakeObjectDetector            = false,
+            bool UseFakeCameraCapturer            = false,
+            bool UseFakeSpeechCommandListener     = false,
             bool UseFakeRobotCommunicationHandler = false,
-            bool UseFakeRobotLogic = false)
+            bool UseFakeRobotLogic                = false)
         {
-            LabelsOfObjectsToDetect = new string[labelsOfObjectsToDetect.Length];
+            LabelsOfObjectsToDetect               = new string[labelsOfObjectsToDetect.Length];
             Array.Copy(labelsOfObjectsToDetect, LabelsOfObjectsToDetect, labelsOfObjectsToDetect.Length);
-            ISerialPort serialPort = UseFakeRobotCommunicationHandler ? (ISerialPort)new SerialPortFake() : new SerialPortImpl();
+            ISerialPort serialPort                = UseFakeRobotCommunicationHandler ? (ISerialPort)new SerialPortFake() : new SerialPortImpl();
 
-            state = new State();
-            objectDetector = new ObjectDetector(UseFakeObjectDetector, "TinyYolo2_model.onnx", LabelsOfObjectsToDetect);
-            cameraCapturer = new CameraCapturer(UseFakeCameraCapturer);
-            speechCommandListener = new SpeechCommandListener(UseFakeSpeechCommandListener, state);
-            robotCommunicationHandler = new RobotCommunicationHandler(serialPort);
-            robotLogic = new RobotLogic(UseFakeRobotLogic, state);
-            speaker = new Speaker();
+            state                                 = new State();
+            objectDetector                        = new ObjectDetector(UseFakeObjectDetector, "TinyYolo2_model.onnx", LabelsOfObjectsToDetect);
+            cameraCapturer                        = new CameraCapturer(UseFakeCameraCapturer);
+            speechCommandListener                 = new SpeechCommandListener(UseFakeSpeechCommandListener, state);
+            robotCommunicationHandler             = new RobotCommunicationHandler(serialPort, baudRate);
+            robotLogic                            = new RobotLogic(UseFakeRobotLogic, state);
+            speaker                               = new Speaker();
 
-            publishersAndSubscribers = new ConcurrentQueue<IPubSubBase>();
+            publishersAndSubscribers              = new ConcurrentQueue<IPubSubBase>();
 
             publishersAndSubscribers.Enqueue((IPubSubBase)robotCommunicationHandler);
             publishersAndSubscribers.Enqueue((IPubSubBase)robotLogic);

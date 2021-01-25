@@ -129,7 +129,7 @@ void sendSensorValues()
 }
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
   mag.enableAutoRange(true);
   magOK   = mag.begin();
   accelOK = accel.begin();

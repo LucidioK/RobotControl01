@@ -52,11 +52,23 @@
         <Label x:Name="lblMotorR" Content="__mr__" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,100,0,0" VerticalAlignment="Top" Width="70"/>
         <Image x:Name="objectDetectionImage" Grid.Column="2" HorizontalAlignment="Left" Height="224" Margin="26,300,0,0" VerticalAlignment="Top" Width="359" />
         <Label x:Name="label1_Copy7" Content="Latest cmd:" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="26,131,0,0" VerticalAlignment="Top" Width="70"/>
-        <Label x:Name="lblLatestCommand" Content="__lc__" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,131,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="lblLatestCommand" Content="__lc__" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,131,0,0" VerticalAlignment="Top" Width="438"/>
         <Label x:Name="label1_Copy8" Content="Please say:" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="26,147,0,0" VerticalAlignment="Top" Width="70"/>
-        <Label x:Name="lblPleaseSay" Content="__ps__" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,147,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="lblPleaseSay" Content="__ps__" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,147,0,0" VerticalAlignment="Top" Width="438"/>
         <Label x:Name="label1_Copy9" Content="Object data:" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="26,164,0,0" VerticalAlignment="Top" Width="75"/>
-        <Label x:Name="lblObjectData" Content="__od__" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,164,0,0" VerticalAlignment="Top" Width="70"/>
+        <Label x:Name="lblObjectData" Content="__od__" Grid.Column="2" HorizontalAlignment="Left" Height="26" Margin="101,164,0,0" VerticalAlignment="Top" Width="438"/>
         <Image x:Name="webCamImage" Grid.Column="2" HorizontalAlignment="Left" Height="91" Margin="26,196,0,0" VerticalAlignment="Top" Width="134"/>
+        <ComboBox x:Name="baudRateComboBox" Grid.Column="2" HorizontalAlignment="Left" Height="22" Margin="254,202,0,0" VerticalAlignment="Top" Width="131">
+            <ComboBoxItem Content="2400"/>
+            <ComboBoxItem Content="4800"/>
+            <ComboBoxItem Content="9600" IsSelected="True"/>
+            <ComboBoxItem Content="19200"/>
+            <ComboBoxItem Content="38400"/>
+            <ComboBoxItem Content="57600"/>
+            <ComboBoxItem Content="74880"/>
+            <ComboBoxItem Content="115200"/>
+            <ComboBoxItem Content="230400"/>
+        </ComboBox>
+        <Label x:Name="label2" Content="Serial port speed:" Grid.Column="2" HorizontalAlignment="Left" Height="28" Margin="139,199,0,0" VerticalAlignment="Top" Width="110"/>
     </Grid>
 </Window>

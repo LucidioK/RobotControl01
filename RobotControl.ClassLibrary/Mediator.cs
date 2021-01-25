@@ -34,8 +34,16 @@ namespace RobotControl.Net
             }
         }
 
-        public void OnEvent(IEventDescriptor eventDescriptor) =>
-            publishTargets.ToList().Where(pt => pt.HandledEvents.Contains(eventDescriptor.Name))?.ToList().ForEach(t => t.OnEvent(eventDescriptor));
+        public void OnEvent(IEventDescriptor eventDescriptor)
+        {
+            foreach (var publishTarget in publishTargets)
+            {
+                if (publishTarget.HandledEvents.Contains(eventDescriptor.Name))
+                {
+                    publishTarget.OnEvent(eventDescriptor);
+                }
+            }
+        }
 
         private bool Implements(object o, string interfaceName) =>
             o.GetType().GetInterface(interfaceName) != null;

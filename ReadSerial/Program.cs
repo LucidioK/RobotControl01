@@ -15,6 +15,7 @@ namespace ReadSerial
                 Environment.Exit(1);
             }
             var sp = new SerialPort(args[0]);
+            sp.ReadTimeout = 1000;
             sp.Open();
             while (true)
             {

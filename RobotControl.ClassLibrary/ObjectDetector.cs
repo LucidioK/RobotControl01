@@ -12,6 +12,7 @@ namespace RobotControl.Net
     using System.Drawing;
     using System.IO;
     using System.Linq;
+    using System.Threading;
 
     public class ObjectDetector : IObjectDetector
     {
@@ -21,6 +22,7 @@ namespace RobotControl.Net
         private readonly OnnxOutputParser onnxOutputParser;
         private readonly PredictionEngine<ImageInputData, TinyYoloPrediction> tinyYoloPredictionEngine;
         private readonly string[] labelsOfObjectsToDetect;
+        private readonly object detectLock = new object();
 
         public int ImageWidth => ImageSettings.imageWidth;
         public int ImageHeight => ImageSettings.imageHeight;
@@ -37,38 +39,51 @@ namespace RobotControl.Net
             tinyYoloPredictionEngine = onnxModelConfigurator.GetMlNetPredictionEngine<TinyYoloPrediction>();
         }
 
-        public BoundingBox[] DetectObjects(Bitmap bitmap)
+        public void DetectObjects(Bitmap bitmap)
         {
-            var prediction = tinyYoloPredictionEngine.Predict(new ImageInputData { Image = bitmap });
-            var labels = prediction.PredictedLabels;
-            var boundingBoxes = onnxOutputParser.ParseOutputs(labels);
-            var filteredBoxes = onnxOutputParser.FilterBoundingBoxes(boundingBoxes, 5, 0.5f);
-            if (filteredBoxes.Count == 0)
+            if (Monitor.TryEnter(detectLock))
             {
-                return null;
+                try
+                {
+                    var prediction = tinyYoloPredictionEngine.Predict(new ImageInputData { Image = bitmap });
+                    Thread.Sleep(1);
+                    var labels = prediction.PredictedLabels;
+                    var boundingBoxes = onnxOutputParser.ParseOutputs(labels);
+                    var filteredBoxes = onnxOutputParser.FilterBoundingBoxes(boundingBoxes, 5, 0.5f);
+                    if (filteredBoxes.Count == 0)
+                    {
+                        return;
+                    }
+                    filteredBoxes = filteredBoxes.Where(b => labelsOfObjectsToDetect.Any(l => l.Equals(b.Label, StringComparison.InvariantCultureIgnoreCase))).ToList();
+                    if (filteredBoxes.Count == 0)
+                    {
+                        return;
+                    }
+                    var highestConfidence = filteredBoxes.Select(b => b.Confidence).Max();
+                    var highestConfidenceBox = filteredBoxes.First(b => b.Confidence == highestConfidence);
+                    DisplayDetectedObjects(bitmap, highestConfidenceBox);
+                    var bbdfb = BoundingBoxDeltaFromBitmap.FromBitmap(bitmap, highestConfidenceBox);
+                    pubSub.Publish(new EventDescriptor
+                    {
+                        Name = EventName.ObjectDetected,
+                        Detail = JsonConvert.SerializeObject(bbdfb),
+                        Value = bbdfb.XDeltaProportionFromBitmapCenter,
+                        Bitmap = bitmap
+                    });
+                }
+                finally
+                {
+                    Monitor.Exit(detectLock);
+                }
             }
-            filteredBoxes = filteredBoxes.Where(b => labelsOfObjectsToDetect.Any(l => l.Equals(b.Label, StringComparison.InvariantCultureIgnoreCase))).ToList();
-            if (filteredBoxes.Count == 0)
+            else
             {
-                return null;
+                Console.WriteLine("-->Already detecting object, out!");
             }
-            var highestConfidence = filteredBoxes.Select(b => b.Confidence).Max();
-            var highestConfidenceBox = filteredBoxes.First(b => b.Confidence == highestConfidence);
-            DisplayDetectedObjects(bitmap, highestConfidenceBox);
-            var bbdfb = BoundingBoxDeltaFromBitmap.FromBitmap(bitmap, highestConfidenceBox);
-            pubSub.Publish(new EventDescriptor
-            {
-                Name   = EventName.ObjectDetected,
-                Detail = JsonConvert.SerializeObject(bbdfb),
-                Value  = bbdfb.XDeltaProportionFromBitmapCenter,
-                Bitmap = bitmap
-            }); ;
-            return filteredBoxes.ToArray();
         }
 
         private static void DisplayDetectedObjects(Bitmap bitmap, BoundingBox box)
         {
-            Console.WriteLine(DateTime.Now);
             var bbdfb = BoundingBoxDeltaFromBitmap.FromBitmap(bitmap, box);
 
             var x = box.Dimensions.X * bbdfb.CorrX;
@@ -86,9 +101,9 @@ namespace RobotControl.Net
                     gr.DrawLine(new Pen(Color.Green, 2), midX, 0, midX, bitmap.Height - 1);
                 }
             }
-            Console.WriteLine($"{box.Label} {(int)(box.Confidence * 100)}% bitmap width: {bitmap.Width} Box X:{(int)box.Dimensions.X} Box Width: {(int)box.Dimensions.Width} position: {bbdfb.XDeltaProportionFromBitmapCenter}");
+            //Console.WriteLine($"{box.Label} {(int)(box.Confidence * 100)}% bitmap width: {bitmap.Width} Box X:{(int)box.Dimensions.X} Box Width: {(int)box.Dimensions.Width} position: {bbdfb.XDeltaProportionFromBitmapCenter}");
 
-            bitmap.Save("captured.bmp");
+            //bitmap.Save("captured.bmp");
         }
 
         private PubSub pubSub = new PubSub();

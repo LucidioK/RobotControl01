@@ -9,6 +9,7 @@ namespace RobotControl.Net
     {
         private readonly Thread thread;
         SpeechRecognitionEngine speechRecognitionEngine = new SpeechRecognitionEngine();
+
         GrammarBuilder grammarBuilder = new GrammarBuilder();
         DictationGrammar dictationGrammar = new DictationGrammar();
         string latestText;
@@ -34,8 +35,8 @@ namespace RobotControl.Net
 
             speechRecognitionEngine.SetInputToDefaultAudioDevice();
             speechRecognitionEngine.LoadGrammar(/*new Grammar(grammarBuilder)*/dictationGrammar);
-            thread = new Thread(new ThreadStart(SpeechCommandListenerThread));
-            thread.Start();
+            speechRecognitionEngine.RecognizeCompleted += RecognizeCompleted;
+            speechRecognitionEngine.RecognizeAsync();
         }
 
         public string GetLatestText()
@@ -59,25 +60,24 @@ namespace RobotControl.Net
         private PubSub pubSub = new PubSub();
         public void Subscribe(IPublishTarget publisherTarget) => pubSub.Subscribe(publisherTarget);
 
-        private void SpeechCommandListenerThread()
+        private void RecognizeCompleted(object sender, RecognizeCompletedEventArgs e)
         {
-            while (true)
+            if (e.Result != null && Monitor.TryEnter(latestTextLock))
             {
-                var result = speechRecognitionEngine.Recognize();
-                if (result != null && Monitor.TryEnter(latestTextLock))
+                foreach (var alternative in e.Result.Alternates)
                 {
-                    foreach (var alternative in result.Alternates)
+                    if (commands.Contains(alternative.Text))
                     {
-                        if (commands.Contains(alternative.Text))
-                        {
-                            latestText = result.Text;
-                            pubSub.Publish(new EventDescriptor { Name = EventName.VoiceCommandDetected, Detail = latestText });
-                            fresh = true;
-                            break;
-                        }
+                        latestText = e.Result.Text;
+                        pubSub.Publish(new EventDescriptor { Name = EventName.VoiceCommandDetected, Detail = latestText });
+                        fresh = true;
+                        break;
                     }
                 }
             }
+
+            // Restart recognition.
+            speechRecognitionEngine.RecognizeAsync();
         }
     }
 }

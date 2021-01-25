@@ -12,7 +12,6 @@
     {
         private const string FakeCameraCapturerVideoPath = "FakeCameraCapturer.mp4";
         private VideoCapture videoCapture;
-        private readonly Thread cameraThread;
         private object latestBitmapLock = new object();
         private Bitmap latestBitmap;
         private bool fresh = false;
@@ -21,8 +20,7 @@
         public CameraCapturer(bool fake)
         {
             this.fake = fake;
-            cameraThread = new Thread(new ThreadStart(CameraCaptureLoopThread));
-            cameraThread.Start();
+            ThreadPool.QueueUserWorkItem(CameraCaptureLoopThread, this);
         }
 
         public Bitmap GetLatestBitmap()
@@ -41,17 +39,19 @@
             }
         }
 
-        private void CameraCaptureLoopThread()
+        private void CameraCaptureLoopThread(object state)
         {
-            StartCapture();
+            var cameraCapturer = (CameraCapturer)state;
+            cameraCapturer.StartCapture();
             var frame = new Mat();
-            while ((frame = ReadFromCapturer()) != null)
+            while ((frame = cameraCapturer.ReadFromCapturer()) != null)
             {
-                if (Monitor.TryEnter(latestBitmapLock))
+                if (Monitor.TryEnter(cameraCapturer.latestBitmapLock))
                 {
                     latestBitmap = BitmapConverter.ToBitmap(frame.Flip(FlipMode.Y));
                     fresh = true;
-                    pubSub.Publish(new EventDescriptor
+                    Thread.Sleep(1);
+                    cameraCapturer.pubSub.Publish(new EventDescriptor
                     {
                         Name = EventName.NewImageDetected,
                         Bitmap = latestBitmap

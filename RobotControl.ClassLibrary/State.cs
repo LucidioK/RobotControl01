@@ -82,26 +82,31 @@ namespace RobotControl.Net
                 RobotData robotData;
                 try
                 {
-                    robotData             = JsonConvert.DeserializeObject<RobotData>(eventDescriptor.Detail);
+                    System.Diagnostics.Debug.WriteLine($"-->DATA FROM ROBOT: {eventDescriptor.Detail}");
+                    robotData = JsonConvert.DeserializeObject<RobotData>(eventDescriptor.Detail);
                     if (!string.IsNullOrEmpty(robotData.status))
                     {
                         Console.WriteLine($"Robot returned status [{robotData.status}]");
                     }
-                    this.BatteryVoltage   = robotData.voltage;
-                    this.CompassHeading   = robotData.compass;
-                    this.ObstacleDistance = robotData.distance;
-                    this.UVLevel          = robotData.uv;
-                    this.XAcceleration    = robotData.accelX;
-                    this.YAcceleration    = robotData.accelY;
-                    this.ZAcceleration    = robotData.accelZ;
-                    pubSub.Publish(new EventDescriptor
+                    var state = (IState)new State()
                     {
-                        Name = EventName.RobotData,
-                        State = this,
-                    });
+                        BatteryVoltage = robotData.voltage,
+                        CompassHeading = robotData.compass,
+                        ObstacleDistance = robotData.distance,
+                        UVLevel = robotData.uv,
+                        XAcceleration = robotData.accelX,
+                        YAcceleration = robotData.accelY,
+                        ZAcceleration = robotData.accelZ,
+                    };
+                    var ev = new EventDescriptor { Name = EventName.RobotData, };
+                    ev.State = state;
+                    pubSub.Publish(ev);
 
                 }
-                catch (Exception) { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"--> {nameof(State)}:{nameof(OnEvent)} exception: {ex.Message}/{ex.StackTrace}");
+                }
             }
         }
     }

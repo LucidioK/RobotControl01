@@ -7,6 +7,6 @@ namespace RobotControl.Net
         int ImageHeight { get; }
         int ImageWidth { get; }
 
-        ObjectDetector.BoundingBox[] DetectObjects(Bitmap bitmap);
+        void DetectObjects(Bitmap bitmap);
     }
 }

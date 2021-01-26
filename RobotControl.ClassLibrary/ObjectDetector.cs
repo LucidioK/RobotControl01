@@ -46,7 +46,6 @@ namespace RobotControl.Net
                 try
                 {
                     var prediction = tinyYoloPredictionEngine.Predict(new ImageInputData { Image = bitmap });
-                    Thread.Sleep(1);
                     var labels = prediction.PredictedLabels;
                     var boundingBoxes = onnxOutputParser.ParseOutputs(labels);
                     var filteredBoxes = onnxOutputParser.FilterBoundingBoxes(boundingBoxes, 5, 0.5f);
@@ -133,6 +132,7 @@ namespace RobotControl.Net
         public class BoundingBoxDeltaFromBitmap
         {
             private BoundingBoxDeltaFromBitmap() { }
+
             public float CorrX { get;  private set; }
             public float CorrY { get;  private set; }
             public float BitmapWidth { get;  private set; }
@@ -144,24 +144,29 @@ namespace RobotControl.Net
 
             public static BoundingBoxDeltaFromBitmap FromBitmap(Bitmap bitmap, BoundingBox box)
             {
-                var bbdfb = new BoundingBoxDeltaFromBitmap()
+                var bbdfb        = new BoundingBoxDeltaFromBitmap()
                 {
-                    BitmapWidth = bitmap.Width,
-                    BitmapHeight = bitmap.Height,
-                    CorrX = (float)bitmap.Width / ImageSettings.imageWidth,
-                    CorrY = (float)bitmap.Height / ImageSettings.imageHeight,
+                    BitmapWidth  = R0(bitmap.Width),
+                    BitmapHeight = R0(bitmap.Height),
+                    CorrX        = (float)bitmap.Width  / ImageSettings.imageWidth,
+                    CorrY        = (float)bitmap.Height / ImageSettings.imageHeight,
                 };
-
-                var midXImg = bitmap.Width / 2;
+                
+                var midXImg = bitmap.Width  / 2;
                 var midXBox = (box.Dimensions.X * bbdfb.CorrX) + (box.Dimensions.Width * bbdfb.CorrX / 2);
-                bbdfb.XDeltaFromBitmapCenter = midXBox - midXImg;
+                bbdfb.XDeltaFromBitmapCenter = R1(midXBox - midXImg);
 
                 var midYImg = bitmap.Height / 2;
                 var midYBox = (box.Dimensions.Y * bbdfb.CorrY) + (box.Dimensions.Height * bbdfb.CorrY / 2);
-                bbdfb.YDeltaFromBitmapCenter = midYBox - midYImg;
-
+                bbdfb.YDeltaFromBitmapCenter = R1(midYBox - midYImg);
+                bbdfb.CorrX = R1(bbdfb.CorrX);
+                bbdfb.CorrY = R1(bbdfb.CorrY);
                 return bbdfb;
             }
+
+            public static float R0(float n) => Round(n, 0);
+            public static float R1(float n) => Round(n, 1);
+            public static float Round(float n, int decimals) => (float)Math.Round((double)n, decimals);
         }
 
         public class BoundingBox

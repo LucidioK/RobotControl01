@@ -16,11 +16,14 @@
         private Bitmap latestBitmap;
         private bool fresh = false;
         private bool fake;
-
+        private Thread thread;
         public CameraCapturer(bool fake)
         {
             this.fake = fake;
-            ThreadPool.QueueUserWorkItem(CameraCaptureLoopThread, this);
+            this.thread = new Thread(CameraCaptureLoopThread);
+            this.thread.Priority = ThreadPriority.AboveNormal;
+            this.thread.Start(this);
+            //ThreadPool.QueueUserWorkItem(CameraCaptureLoopThread, this);
         }
 
         public Bitmap GetLatestBitmap()
@@ -50,7 +53,6 @@
                 {
                     latestBitmap = BitmapConverter.ToBitmap(frame.Flip(FlipMode.Y));
                     fresh = true;
-                    Thread.Sleep(1);
                     cameraCapturer.pubSub.Publish(new EventDescriptor
                     {
                         Name = EventName.NewImageDetected,

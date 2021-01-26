@@ -21,7 +21,10 @@ namespace RobotControl.Net
             {
                 this.portNumber = portNumber;
                 this.baudRate = baudRate;
-                GetSerialPort();
+                lock (serialPortLock)
+                {
+                    GetSerialPort();
+                }
 
                 thread = new Thread(SerialReadThread);
                 thread.Start();

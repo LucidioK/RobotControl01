@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<grammar version="1.0" xml:lang="en-US"
+         xmlns="http://www.w3.org/2001/06/grammar"
+         tag-format="semantics/1.0" root="Main">
+
+  <!--  -->
+
+  <rule id="Main">
+    <item>
+      Robot <ruleref uri="#Command"/>
+    </item>
+  </rule>
+
+  <rule id="Command" scope="public">
+    <one-of>
+      <item>Start</item>
+      <item>Stop</item>
+      <item>Configure</item>
+      <item>Continue</item>
+      <item>Go home</item>
+    </one-of>
+  </rule>
+</grammar>

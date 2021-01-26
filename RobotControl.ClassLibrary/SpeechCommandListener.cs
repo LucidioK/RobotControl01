@@ -12,18 +12,16 @@ namespace RobotControl.Net
 
         GrammarBuilder grammarBuilder = new GrammarBuilder();
         DictationGrammar dictationGrammar = new DictationGrammar();
+        Grammar grammar;
         string latestText;
         object latestTextLock = new object();
         bool fresh = false;
         string[] commands = new string[] {
-            "robot",
-            "stop",
             "robot stop",
             "robot continue",
             "robot start",
             "robot go home",
             "robot configure",
-            "robot config",
         };
 
 
@@ -31,10 +29,11 @@ namespace RobotControl.Net
         {
             this.fake = fake;
             this.state = state;
-            foreach (var command in commands) grammarBuilder.Append(command);
-
+            //foreach (var command in commands) grammarBuilder.Append(command);
+            grammar = new Grammar("SpeechGrammar.xml");
             speechRecognitionEngine.SetInputToDefaultAudioDevice();
-            speechRecognitionEngine.LoadGrammar(/*new Grammar(grammarBuilder)*/dictationGrammar);
+            //speechRecognitionEngine.LoadGrammar(/*new Grammar(grammarBuilder)*/dictationGrammar);
+            speechRecognitionEngine.LoadGrammar(grammar);
             speechRecognitionEngine.RecognizeCompleted += RecognizeCompleted;
             speechRecognitionEngine.RecognizeAsync();
         }
@@ -55,6 +54,8 @@ namespace RobotControl.Net
             }
         }
 
+        public string[] Commands => commands;
+
         private readonly bool fake;
         IState state;
         private PubSub pubSub = new PubSub();
@@ -64,11 +65,14 @@ namespace RobotControl.Net
         {
             if (e.Result != null && Monitor.TryEnter(latestTextLock))
             {
+                System.Diagnostics.Debug.WriteLine($"-->SpeechCommandListener.RecognizeCompleted: {string.Join(", ", e.Result.Alternates.Select(a => a.Text))}");
                 foreach (var alternative in e.Result.Alternates)
                 {
-                    if (commands.Contains(alternative.Text))
+                    var s = alternative.Text.ToLowerInvariant().Trim();
+                    if (commands.Contains(s))
                     {
-                        latestText = e.Result.Text;
+                        System.Diagnostics.Debug.WriteLine($"-->SpeechCommandListener.RecognizeCompleted: Publishing {s}");
+                        latestText = s;
                         pubSub.Publish(new EventDescriptor { Name = EventName.VoiceCommandDetected, Detail = latestText });
                         fresh = true;
                         break;

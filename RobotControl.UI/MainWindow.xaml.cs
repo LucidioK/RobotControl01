@@ -47,24 +47,22 @@ namespace RobotControl.UI
 
         private void startStop_Click(object sender, RoutedEventArgs e)
         {
-            //if (this.startStop.Content == "Start")
-            //{
-            this.baudRate = int.Parse(this.baudRateComboBox.Text);
-            this.labelsOfObjectsToDetect = GetLabelsOfObjectsToDetect();
-            this.startStop.IsEnabled = false;
+            var content = (string)this.startStop.Content;
+            if (content == "Start")
+            {
+                this.baudRate = int.Parse(this.baudRateComboBox.Text);
+                this.labelsOfObjectsToDetect = GetLabelsOfObjectsToDetect();
+                this.startStop.Content = "Stop";
 
-            ThreadPool.SetMinThreads(8, 8);
-            //ThreadPool.QueueUserWorkItem(RobotControlStartWaitCallback, this);
-            this.RobotControl = new Net.RobotControl(this.labelsOfObjectsToDetect, this.baudRate);
-            this.RobotControl.Subscribe(this);
+                this.RobotControl = new Net.RobotControl(this.labelsOfObjectsToDetect, this.baudRate);
+                this.RobotControl.Subscribe(this);
+                
+            }
+            else
+            {
+                Environment.Exit(0);
+            }
         }
-
-        //private void RobotControlStartWaitCallback(object state)
-        //{
-        //    var thisWindows = (MainWindow)state;
-        //    thisWindows.RobotControl = new Net.RobotControl(thisWindows.labelsOfObjectsToDetect, thisWindows.baudRate);
-        //    thisWindows.RobotControl.Subscribe(thisWindows);
-        //}
 
         private string[] GetLabelsOfObjectsToDetect()
         {
@@ -115,25 +113,25 @@ namespace RobotControl.UI
 
         private void EnableDisableStartStopButton()                                 =>
             this.startStop.IsEnabled =
-                checkBoxAeroplane.IsChecked.GetValueOrDefault() ||
-                checkBoxBicycle.IsChecked.GetValueOrDefault() ||
-                checkBoxBird.IsChecked.GetValueOrDefault() ||
-                checkBoxBoat.IsChecked.GetValueOrDefault() ||
-                checkBoxBottle.IsChecked.GetValueOrDefault() ||
-                checkBoxBus.IsChecked.GetValueOrDefault() ||
-                checkBoxCar.IsChecked.GetValueOrDefault() ||
-                checkBoxCat.IsChecked.GetValueOrDefault() ||
-                checkBoxChair.IsChecked.GetValueOrDefault() ||
-                checkBoxCow.IsChecked.GetValueOrDefault() ||
+                checkBoxAeroplane.IsChecked.GetValueOrDefault()   ||
+                checkBoxBicycle.IsChecked.GetValueOrDefault()     ||
+                checkBoxBird.IsChecked.GetValueOrDefault()        ||
+                checkBoxBoat.IsChecked.GetValueOrDefault()        ||
+                checkBoxBottle.IsChecked.GetValueOrDefault()      ||
+                checkBoxBus.IsChecked.GetValueOrDefault()         ||
+                checkBoxCar.IsChecked.GetValueOrDefault()         ||
+                checkBoxCat.IsChecked.GetValueOrDefault()         ||
+                checkBoxChair.IsChecked.GetValueOrDefault()       ||
+                checkBoxCow.IsChecked.GetValueOrDefault()         ||
                 checkBoxDiningtable.IsChecked.GetValueOrDefault() ||
-                checkBoxDog.IsChecked.GetValueOrDefault() ||
-                checkBoxHorse.IsChecked.GetValueOrDefault() ||
-                checkBoxMotorbike.IsChecked.GetValueOrDefault() ||
-                checkBoxPerson.IsChecked.GetValueOrDefault() ||
+                checkBoxDog.IsChecked.GetValueOrDefault()         ||
+                checkBoxHorse.IsChecked.GetValueOrDefault()       ||
+                checkBoxMotorbike.IsChecked.GetValueOrDefault()   ||
+                checkBoxPerson.IsChecked.GetValueOrDefault()      ||
                 checkBoxPottedplant.IsChecked.GetValueOrDefault() ||
-                checkBoxSheep.IsChecked.GetValueOrDefault() ||
-                checkBoxSofa.IsChecked.GetValueOrDefault() ||
-                checkBoxTrain.IsChecked.GetValueOrDefault() ||
+                checkBoxSheep.IsChecked.GetValueOrDefault()       ||
+                checkBoxSofa.IsChecked.GetValueOrDefault()        ||
+                checkBoxTrain.IsChecked.GetValueOrDefault()       ||
                 checkBoxTvmonitor.IsChecked.GetValueOrDefault();
 
         public void OnEvent(IEventDescriptor eventDescriptor)
@@ -141,17 +139,17 @@ namespace RobotControl.UI
             switch (eventDescriptor.Name)
             {
                 case EventName.VoiceCommandDetected:
-                    this.Dispatcher.Invoke(() =>
+                    this.Dispatcher.Invoke(()            =>
                     {
-                        this.lblLatestCommand.Content = eventDescriptor.Detail;
+                        this.lblLatestCommand.Content    = eventDescriptor.Detail;
                     });
                     break;
                 case EventName.RainDetected:
                     break;
                 case EventName.ObjectDetected:
-                    this.Dispatcher.Invoke(() =>
+                    this.Dispatcher.Invoke(()            =>
                     {
-                        this.lblObjectData.Content = eventDescriptor.Detail;
+                        this.lblObjectData.Content       = eventDescriptor.Detail;
                         this.objectDetectionImage.Source = BitmapToBitmapImage(eventDescriptor.Bitmap);
                     });
                     break;
@@ -159,19 +157,19 @@ namespace RobotControl.UI
                     break;
                 case EventName.NeedToMoveDetected:
                     {
-                        var details = JsonConvert.DeserializeObject<Dictionary<string, object>>(eventDescriptor.Detail);
-                        this.Dispatcher.Invoke(() =>
+                        var details                      = JsonConvert.DeserializeObject<Dictionary<string, object>>(eventDescriptor.Detail);
+                        this.Dispatcher.Invoke(()        =>
                         {
-                            this.lblMotorL.Content = details.ContainsKey("l") ? details["l"].ToString() : "_";
-                            this.lblMotorR.Content = details.ContainsKey("r") ? details["r"].ToString() : "_"; ;
+                            this.lblMotorL.Content       = details.ContainsKey("l") ? details["l"].ToString() : "_";
+                            this.lblMotorR.Content       = details.ContainsKey("r") ? details["r"].ToString() : "_"; ;
                         });
                         break;
                     }
                 case EventName.NewImageDetected:
-                    this.Dispatcher.Invoke(() =>
-                    {
-                        this.webCamImage.Source = BitmapToBitmapImage(eventDescriptor.Bitmap);
-                    });
+                    //this.Dispatcher.Invoke(() =>
+                    //{
+                    //    this.webCamImage.Source = BitmapToBitmapImage(eventDescriptor.Bitmap);
+                    //});
                     break;
                 case EventName.RawRobotDataDetected:
 
@@ -186,18 +184,18 @@ namespace RobotControl.UI
                     //});
                     break;
                 case EventName.RobotData:
-                    this.Dispatcher.Invoke(() =>
+                    this.Dispatcher.Invoke(()     =>
                     {
-                        this.lblAccelX.Content = eventDescriptor.State.XAcceleration.ToString("0.0");
-                        this.lblAccelY.Content = eventDescriptor.State.YAcceleration.ToString("0.0");
-                        this.lblAccelZ.Content = eventDescriptor.State.ZAcceleration.ToString("0.0");
-                        this.lblDistance.Content = eventDescriptor.State.ObstacleDistance.ToString("0.0");
-                        this.lblVoltage.Content = eventDescriptor.State.BatteryVoltage.ToString("0.0");
-                        this.lblCompass.Content = eventDescriptor.State.CompassHeading.ToString("0.0");
+                        this.lblAccelX.Content    = eventDescriptor.State.XAcceleration.ToString("0.0");
+                        this.lblAccelY.Content    = eventDescriptor.State.YAcceleration.ToString("0.0");
+                        this.lblAccelZ.Content    = eventDescriptor.State.ZAcceleration.ToString("0.0");
+                        this.lblDistance.Content  = eventDescriptor.State.ObstacleDistance.ToString("0.0");
+                        this.lblVoltage.Content   = eventDescriptor.State.BatteryVoltage.ToString("0.0");
+                        this.lblCompass.Content   = eventDescriptor.State.CompassHeading.ToString("0.0");
                     });
                     break;
                 case EventName.PleaseSay:
-                    this.Dispatcher.Invoke(() =>
+                    this.Dispatcher.Invoke(()     =>
                     {
                         this.lblPleaseSay.Content = eventDescriptor.Detail;
                     });

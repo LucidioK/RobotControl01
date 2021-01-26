@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace RobotControl.Net
 {
-    public class RobotControl
+    public class RobotControl 
     {
         IState state;
         IObjectDetector objectDetector;
@@ -19,7 +19,7 @@ namespace RobotControl.Net
 
         ConcurrentQueue<IPubSubBase> publishersAndSubscribers;
 
-        IMediator mediator;
+        public IMediator mediator;
 
         private  string[] LabelsOfObjectsToDetect;
 
@@ -57,7 +57,9 @@ namespace RobotControl.Net
             publishersAndSubscribers.Enqueue((IPubSubBase)speaker);
             mediator = new Mediator(publishersAndSubscribers);
 
-            pubSub.Publish(new EventDescriptor { Name = EventName.PleaseSay, Detail = "Robot is Ready." });
+            var s = "Worker Gary is Ready. These are the commands I can understand: ";
+            s += string.Join(", ", speechCommandListener.Commands);
+            mediator.OnEvent(new EventDescriptor { Name = EventName.PleaseSay, Detail = s });
         }
 
         public void Subscribe(IPublishTarget target) => mediator.Subscribe(target);

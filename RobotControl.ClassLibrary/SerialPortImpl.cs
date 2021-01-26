@@ -10,6 +10,7 @@ namespace RobotControl.Net
 
         Action<string> onDataReceivedCallback;
         object serialPortLock = new object();
+        object getSerialPortLock = new object();
         int portNumber;
         int baudRate;
         private Thread thread;
@@ -71,19 +72,40 @@ namespace RobotControl.Net
 
         public SerialPort GetSerialPort()
         {
-            if (serialPort != null && serialPort.IsOpen)
+            lock (getSerialPortLock)
             {
-                serialPort.DiscardInBuffer();
-                serialPort.DiscardOutBuffer();
-                serialPort.Close();
-            }
-            serialPort = new SerialPort($"COM{portNumber}", baudRate);
+                if (serialPort != null && serialPort.IsOpen)
+                {
+                    serialPort.DiscardInBuffer();
+                    serialPort.DiscardOutBuffer();
+                    serialPort.Close();
+                }
+                serialPort = new SerialPort($"COM{portNumber}", baudRate);
 
-            // this seems to be important for Arduino:
-            serialPort.RtsEnable = true;
-            serialPort.ReadTimeout = 5000;
-            serialPort.Open();
-            return serialPort;
+                // this seems to be important for Arduino:
+                serialPort.RtsEnable = true;
+                serialPort.ReadTimeout = 5000;
+                for (var i = 0; !serialPort.IsOpen && i < 8; i++)
+                {
+                    try
+                    {
+                        serialPort.Open();
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        System.Diagnostics.Debug.WriteLine("-->SerialPortImpl.GetSerialPort UnauthorizedAccessException, retrying");
+                    }
+                }
+
+                if (serialPort.IsOpen)
+                {
+                    return serialPort;
+                }
+                else
+                {
+                    throw new Exception($"Cannot open COM{portNumber}");
+                }
+            }
         }
     }
 }

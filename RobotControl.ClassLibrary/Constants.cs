@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RobotControl.Net
+namespace RobotControl.ClassLibrary
 {
     class Constants
     {

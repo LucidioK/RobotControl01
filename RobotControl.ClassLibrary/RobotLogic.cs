@@ -1,13 +1,14 @@
 ﻿
-namespace RobotControl.Net
+namespace RobotControl.ClassLibrary
 {
     using System;
-    internal class RobotLogic : IRobotLogic
+    internal class RobotLogic : RobotControlBase, IRobotLogic
     {
         private readonly bool fake;
         private IState state;
         public EventName[] HandledEvents => new EventName[] { EventName.RobotData, EventName.ObjectDetected, EventName.RainDetected, EventName.VoiceCommandDetected };
-        public RobotLogic(bool fake, IState state)
+        public RobotLogic(IMediator mediator, bool fake, IState state)
+            : base(mediator)
         {
             this.fake = fake;
             this.state = state;
@@ -15,23 +16,26 @@ namespace RobotControl.Net
 
         public void OnEvent(IEventDescriptor eventDescriptor)
         {
-            switch (eventDescriptor.Name)
+            TryCatch(() =>
             {
-                case EventName.RobotData:
-                    checkRobotData(eventDescriptor);
-                    break;
-                case EventName.ObjectDetected:
-                    turnOrMove(eventDescriptor);
-                    break;
-                case EventName.RainDetected:
-                    startEvadingToShelter();
-                    break;
-                case EventName.VoiceCommandDetected:
-                    handleVoiceCommand(eventDescriptor);
-                    break;
-                default:
-                    return;
-            }
+                switch (eventDescriptor.Name)
+                {
+                    case EventName.RobotData:
+                        checkRobotData(eventDescriptor);
+                        break;
+                    case EventName.ObjectDetected:
+                        turnOrMove(eventDescriptor);
+                        break;
+                    case EventName.RainDetected:
+                        startEvadingToShelter();
+                        break;
+                    case EventName.VoiceCommandDetected:
+                        handleVoiceCommand(eventDescriptor);
+                        break;
+                    default:
+                        return;
+                }
+            });
         }
 
         private void checkRobotData(IEventDescriptor eventDescriptor)
@@ -45,9 +49,6 @@ namespace RobotControl.Net
                 startChargingProcedure();
             }
         }
-
-        private PubSub pubSub = new PubSub();
-        public void Subscribe(IPublishTarget publisherTarget) => pubSub.Subscribe(publisherTarget);
 
         private void handleVoiceCommand(IEventDescriptor eventDescriptor)
         {
@@ -106,7 +107,7 @@ namespace RobotControl.Net
         private void startObstacleAvoidance(IEventDescriptor eventDescriptor)
         {
             state.RobotState = RobotState.AvoidingObstacle;
-            pubSub.Publish(new EventDescriptor {
+            Publish(new EventDescriptor {
                 Name = EventName.PleaseSay,
                 Detail = $"Detected obstacle at {eventDescriptor.State.ObstacleDistance} centimeters, starting obstacle avoidance."
             });
@@ -114,7 +115,7 @@ namespace RobotControl.Net
         }
 
         private void motor(float l, float r) =>
-            pubSub.Publish(new EventDescriptor
+            Publish(new EventDescriptor
             {
                 Name = EventName.NeedToMoveDetected,
                 Detail = $"{{'operation':'motor','l':{l},'r':{r}}}"

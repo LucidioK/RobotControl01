@@ -1,4 +1,4 @@
-﻿namespace RobotControl.Net
+﻿namespace RobotControl.ClassLibrary
 {
     using OpenCvSharp;
     using OpenCvSharp.Extensions;
@@ -8,7 +8,7 @@
     using System.IO;
     using System.Threading;
 
-    internal class CameraCapturer : ICameraCapturer
+    internal class CameraCapturer : RobotControlBase, ICameraCapturer
     {
         private const string FakeCameraCapturerVideoPath = "FakeCameraCapturer.mp4";
         private VideoCapture videoCapture;
@@ -17,12 +17,12 @@
         private bool fresh = false;
         private bool fake;
         private Thread thread;
-        public CameraCapturer(bool fake)
+        public CameraCapturer(IMediator mediator, bool fake) : base(mediator)
         {
             this.fake = fake;
             this.thread = new Thread(CameraCaptureLoopThread);
             this.thread.Priority = ThreadPriority.AboveNormal;
-            this.thread.Start(this);
+            this.thread.Start();
             //ThreadPool.QueueUserWorkItem(CameraCaptureLoopThread, this);
         }
 
@@ -42,24 +42,28 @@
             }
         }
 
-        private void CameraCaptureLoopThread(object state)
+        private void CameraCaptureLoopThread(/*object state*/)
         {
-            var cameraCapturer = (CameraCapturer)state;
-            cameraCapturer.StartCapture();
-            var frame = new Mat();
-            while ((frame = cameraCapturer.ReadFromCapturer()) != null)
+            TryCatch(() =>
             {
-                if (Monitor.TryEnter(cameraCapturer.latestBitmapLock))
+                var cameraCapturer = this; // (CameraCapturer)state;
+
+                cameraCapturer.StartCapture();
+                var frame = new Mat();
+                while ((frame = cameraCapturer.ReadFromCapturer()) != null)
                 {
-                    latestBitmap = BitmapConverter.ToBitmap(frame.Flip(FlipMode.Y));
-                    fresh = true;
-                    cameraCapturer.pubSub.Publish(new EventDescriptor
+                    if (Monitor.TryEnter(cameraCapturer.latestBitmapLock))
                     {
-                        Name = EventName.NewImageDetected,
-                        Bitmap = latestBitmap
-                    });
+                        latestBitmap = BitmapConverter.ToBitmap(frame.Flip(FlipMode.Y));
+                        fresh = true;
+                        Publish(new EventDescriptor
+                        {
+                            Name = EventName.NewImageDetected,
+                            Bitmap = latestBitmap
+                        });
+                    }
                 }
-            }
+            });
         }
 
         private Mat ReadFromCapturer()
@@ -102,11 +106,8 @@
             }
             else
             {
-                throw new Exception($"Could not find video {FakeCameraCapturerVideoPath}");
+                PublishException(new Exception($"Could not find video {FakeCameraCapturerVideoPath}"));
             }
         }
-
-        private PubSub pubSub = new PubSub();
-        public void Subscribe(IPublishTarget publisherTarget) => pubSub.Subscribe(publisherTarget);
     }
 }

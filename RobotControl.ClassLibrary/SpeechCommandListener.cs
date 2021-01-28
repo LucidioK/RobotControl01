@@ -3,15 +3,12 @@ using System.Linq;
 using System.Speech.Recognition;
 using System.Threading;
 
-namespace RobotControl.Net
+namespace RobotControl.ClassLibrary
 {
-    internal class SpeechCommandListener : ISpeechCommandListener
+    internal class SpeechCommandListener : RobotControlBase, ISpeechCommandListener
     {
-        private readonly Thread thread;
         SpeechRecognitionEngine speechRecognitionEngine = new SpeechRecognitionEngine();
 
-        GrammarBuilder grammarBuilder = new GrammarBuilder();
-        DictationGrammar dictationGrammar = new DictationGrammar();
         Grammar grammar;
         string latestText;
         object latestTextLock = new object();
@@ -25,17 +22,22 @@ namespace RobotControl.Net
         };
 
 
-        public SpeechCommandListener(bool fake, IState state)
+        public SpeechCommandListener(IMediator mediator, bool fake, IState state)
+            : base(mediator)
         {
             this.fake = fake;
             this.state = state;
-            //foreach (var command in commands) grammarBuilder.Append(command);
-            grammar = new Grammar("SpeechGrammar.xml");
-            speechRecognitionEngine.SetInputToDefaultAudioDevice();
-            //speechRecognitionEngine.LoadGrammar(/*new Grammar(grammarBuilder)*/dictationGrammar);
-            speechRecognitionEngine.LoadGrammar(grammar);
-            speechRecognitionEngine.RecognizeCompleted += RecognizeCompleted;
-            speechRecognitionEngine.RecognizeAsync();
+
+            if (!fake)
+            {
+                //foreach (var command in commands) grammarBuilder.Append(command);
+                grammar = new Grammar("SpeechGrammar.xml");
+                speechRecognitionEngine.SetInputToDefaultAudioDevice();
+                //speechRecognitionEngine.LoadGrammar(/*new Grammar(grammarBuilder)*/dictationGrammar);
+                speechRecognitionEngine.LoadGrammar(grammar);
+                speechRecognitionEngine.RecognizeCompleted += RecognizeCompleted;
+                speechRecognitionEngine.RecognizeAsync();
+            }
         }
 
         public string GetLatestText()
@@ -58,8 +60,6 @@ namespace RobotControl.Net
 
         private readonly bool fake;
         IState state;
-        private PubSub pubSub = new PubSub();
-        public void Subscribe(IPublishTarget publisherTarget) => pubSub.Subscribe(publisherTarget);
 
         private void RecognizeCompleted(object sender, RecognizeCompletedEventArgs e)
         {
@@ -73,7 +73,7 @@ namespace RobotControl.Net
                     {
                         System.Diagnostics.Debug.WriteLine($"-->SpeechCommandListener.RecognizeCompleted: Publishing {s}");
                         latestText = s;
-                        pubSub.Publish(new EventDescriptor { Name = EventName.VoiceCommandDetected, Detail = latestText });
+                        Publish(new EventDescriptor { Name = EventName.VoiceCommandDetected, Detail = latestText });
                         fresh = true;
                         break;
                     }

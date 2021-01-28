@@ -49,13 +49,13 @@ void readAndDispatchCommands()
   {
     String s= Serial.readStringUntil('\n');
     outStatus += s;
-    outStatus += "|";
+    outStatus += ";";
     StaticJsonDocument<200> doc;
     DeserializationError error = deserializeJson(doc, s);
     if (error)
     {
       outStatus += error.c_str();
-      outStatus += "|";      
+      outStatus += ";";      
       return;
     }
     if (doc["operation"] == "motor")
@@ -69,7 +69,7 @@ float getCompassHeading()
 {
   if (!magOK)
   {
-    outStatus += "magNOK|";
+    outStatus += "magNOK;";
     return -1.0;
   }
   sensors_event_t event;
@@ -98,18 +98,18 @@ void sendSensorValues()
   }
   else
   {
-    outStatus += "accelNOK|";
+    outStatus += "accelNOK;";
   }
 
   if (magOK)
     doc["compass"] = getCompassHeading();
   else
-    outStatus += "magNOK|";  
+    outStatus += "magNOK;";  
 
   doc["distance"] = distanceDetector.Get();
   doc["voltage"]  = voltageReader.Get();
 
-  if (!uvOK)  outStatus += "uvNOK|";
+  if (!uvOK)  outStatus += "uvNOK;";
 
   uint16_t r1   = uv.readUV();
   delay(10);
@@ -118,7 +118,7 @@ void sendSensorValues()
   uint16_t r3   = uv.readUV();
     
   doc["uv"]  = (r1+r2+r3) / 3;
-  if (outStatus != "")
+  if (outStatus != "" && outStatus != ";")
   {
     doc["status"] = outStatus;
   }
@@ -129,7 +129,7 @@ void sendSensorValues()
 }
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   mag.enableAutoRange(true);
   magOK   = mag.begin();
   accelOK = accel.begin();

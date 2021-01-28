@@ -1,17 +1,18 @@
 ﻿using System.Speech.Synthesis;
 
-namespace RobotControl.Net
+namespace RobotControl.ClassLibrary
 {
-    class Speaker : ISpeaker
+    class Speaker : RobotControlBase, ISpeaker
     {
         SpeechSynthesizer synth = new SpeechSynthesizer();
 
-        public Speaker() => synth.SetOutputToDefaultAudioDevice();
+        public Speaker(IMediator mediator) : base(mediator) => synth.SetOutputToDefaultAudioDevice();
 
         public EventName[] HandledEvents => new EventName[] { EventName.PleaseSay };
 
         public void OnEvent(IEventDescriptor eventDescriptor)
         {
+
             if (eventDescriptor.Name == EventName.PleaseSay)
             {
                 synth.Speak(eventDescriptor.Detail);

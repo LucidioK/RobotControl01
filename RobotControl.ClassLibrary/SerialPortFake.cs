@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Ports;
 
-namespace RobotControl.Net
+namespace RobotControl.ClassLibrary
 {
     class SerialPortFake : ISerialPort
     {
@@ -14,6 +14,7 @@ namespace RobotControl.Net
         private int position = 0;
         List<string> fakeData;
         private Action<string> onDataReceivedCallback;
+        private Action<Exception> onExceptionCallback;
 
         public SerialPortFake()
         {
@@ -31,9 +32,10 @@ namespace RobotControl.Net
             count = (int)fakeData.Count;
         }
 
-        public bool Open(int portNumber, int baudRate, Action<string> onDataReceivedCallback)
+        public bool Open(int portNumber, int baudRate, Action<string> onDataReceivedCallback, Action<Exception> onExceptionCallback)
         {
             this.onDataReceivedCallback = onDataReceivedCallback;
+            this.onExceptionCallback = onExceptionCallback;
             return true;
         }
 

@@ -5,10 +5,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RobotControl.Net
+namespace RobotControl.ClassLibrary
 {
-    public class RobotControl 
+    public class RobotControl : RobotControlBase
     {
+        private Action<Exception> onExceptionCallback;
         IState state;
         IObjectDetector objectDetector;
         ICameraCapturer cameraCapturer;
@@ -17,52 +18,58 @@ namespace RobotControl.Net
         IRobotLogic robotLogic;
         ISpeaker speaker;
 
-        ConcurrentQueue<IPubSubBase> publishersAndSubscribers;
-
-        public IMediator mediator;
+        public static IMediator mediator = new Mediator();
 
         private  string[] LabelsOfObjectsToDetect;
 
-        private  PubSub pubSub = new PubSub();
-
-        public RobotControl(
-            string[] labelsOfObjectsToDetect,
-            int baudRate,
-            bool UseFakeObjectDetector            = false,
-            bool UseFakeCameraCapturer            = false,
-            bool UseFakeSpeechCommandListener     = false,
-            bool UseFakeRobotCommunicationHandler = false,
-            bool UseFakeRobotLogic                = false)
+        public RobotControl()
+            : base(mediator)
         {
-            LabelsOfObjectsToDetect               = new string[labelsOfObjectsToDetect.Length];
-            Array.Copy(labelsOfObjectsToDetect, LabelsOfObjectsToDetect, labelsOfObjectsToDetect.Length);
-            ISerialPort serialPort                = UseFakeRobotCommunicationHandler ? (ISerialPort)new SerialPortFake() : new SerialPortImpl();
-
-            state                                 = new State();
-            objectDetector                        = new ObjectDetector(UseFakeObjectDetector, "TinyYolo2_model.onnx", LabelsOfObjectsToDetect);
-            cameraCapturer                        = new CameraCapturer(UseFakeCameraCapturer);
-            speechCommandListener                 = new SpeechCommandListener(UseFakeSpeechCommandListener, state);
-            robotCommunicationHandler             = new RobotCommunicationHandler(serialPort, baudRate);
-            robotLogic                            = new RobotLogic(UseFakeRobotLogic, state);
-            speaker                               = new Speaker();
-
-            publishersAndSubscribers              = new ConcurrentQueue<IPubSubBase>();
-
-            publishersAndSubscribers.Enqueue((IPubSubBase)robotCommunicationHandler);
-            publishersAndSubscribers.Enqueue((IPubSubBase)robotLogic);
-            publishersAndSubscribers.Enqueue((IPubSubBase)state);
-            publishersAndSubscribers.Enqueue((IPubSubBase)objectDetector);
-            publishersAndSubscribers.Enqueue((IPubSubBase)cameraCapturer);
-            publishersAndSubscribers.Enqueue((IPubSubBase)speechCommandListener);
-            publishersAndSubscribers.Enqueue((IPubSubBase)speaker);
-            mediator = new Mediator(publishersAndSubscribers);
-
-            var s = "Worker Gary is Ready. These are the commands I can understand: ";
-            s += string.Join(", ", speechCommandListener.Commands);
-            mediator.OnEvent(new EventDescriptor { Name = EventName.PleaseSay, Detail = s });
         }
 
-        public void Subscribe(IPublishTarget target) => mediator.Subscribe(target);
+        public async Task InitializeAsync(
+            string[] labelsOfObjectsToDetect,
+            int baudRate,
+            bool UseFakeObjectDetector = false,
+            bool UseFakeCameraCapturer = false,
+            bool UseFakeSpeechCommandListener = false,
+            bool UseFakeSpeaker = false,
+            bool UseFakeRobotCommunicationHandler = false,
+            bool UseFakeRobotLogic = false
+            )
+        {
+            await Task.Run(() =>
+            {
+                LabelsOfObjectsToDetect = new string[labelsOfObjectsToDetect.Length];
+                Array.Copy(labelsOfObjectsToDetect, LabelsOfObjectsToDetect, labelsOfObjectsToDetect.Length);
+                ISerialPort serialPort = UseFakeRobotCommunicationHandler ? (ISerialPort)new SerialPortFake() : new SerialPortImpl();
 
+                state = new State(mediator);
+                objectDetector = new ObjectDetector(mediator, UseFakeObjectDetector, "TinyYolo2_model.onnx", LabelsOfObjectsToDetect);
+                cameraCapturer = new CameraCapturer(mediator, UseFakeCameraCapturer);
+                speechCommandListener = new SpeechCommandListener(mediator, UseFakeSpeechCommandListener, state);
+                robotCommunicationHandler = new RobotCommunicationHandler(mediator, serialPort, baudRate);
+                robotLogic = new RobotLogic(mediator, UseFakeRobotLogic, state);
+                if (!UseFakeSpeaker)
+                {
+                    speaker = new Speaker(mediator);
+                }
+
+                mediator.AddTarget((IPubSubBase)robotCommunicationHandler);
+                mediator.AddTarget((IPubSubBase)robotLogic);
+                mediator.AddTarget((IPubSubBase)state);
+                mediator.AddTarget((IPubSubBase)objectDetector);
+                mediator.AddTarget((IPubSubBase)cameraCapturer);
+                mediator.AddTarget((IPubSubBase)speechCommandListener);
+                if (!UseFakeSpeaker)
+                {
+                    mediator.AddTarget((IPubSubBase)speaker);
+                }
+
+                var s = "Worker Gary is Ready. These are the commands I can understand: ";
+                s += string.Join(", ", speechCommandListener.Commands);
+                mediator.OnEvent(new EventDescriptor { Name = EventName.PleaseSay, Detail = s });
+            });
+        }
     }
 }

@@ -1,5 +1,5 @@
 ﻿
-namespace RobotControl.Net
+namespace RobotControl.ClassLibrary
 {
     using System.Collections.Concurrent;
     using System.Collections.Generic;
@@ -9,13 +9,14 @@ namespace RobotControl.Net
     {
         readonly ConcurrentQueue<IPublishTarget> publishTargets = new ConcurrentQueue<IPublishTarget>();
         public EventName[] HandledEvents => new EventName[] { };
-        public Mediator(IEnumerable<IPubSubBase> targets)
+        public Mediator()
         {
-            foreach (var target in targets)
-            {
-                EnqueueTargetIfNeeded(target);
-                SubscribeIfNeeded(target);
-            }
+        }
+
+        public void AddTarget(IPubSubBase target)
+        {
+            EnqueueTargetIfNeeded(target);
+            SubscribeIfNeeded(target);
         }
 
         private void SubscribeIfNeeded(IPubSubBase target)
@@ -30,7 +31,7 @@ namespace RobotControl.Net
         {
             if (Implements(target, nameof(IPublishTarget)))
             {
-                publishTargets.Enqueue((IPublishTarget)target);
+                publishTargets.Enqueue((IPublishTarget) target);
             }
         }
 

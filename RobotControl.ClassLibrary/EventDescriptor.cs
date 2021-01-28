@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace RobotControl.Net
+namespace RobotControl.ClassLibrary
 {
     public interface IEventDescriptor
     {
@@ -11,7 +11,7 @@ namespace RobotControl.Net
         IState State { get; }
     }
 
-    class EventDescriptor : IEventDescriptor
+    public class EventDescriptor : IEventDescriptor
     {
         public EventName Name { get; set; }
 

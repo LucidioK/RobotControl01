@@ -1,4 +1,4 @@
-﻿namespace RobotControl.Net
+﻿namespace RobotControl.ClassLibrary
 {
     internal class ChainOfResponsibility
     {

@@ -1,5 +1,5 @@
 ﻿
-namespace RobotControl.Net
+namespace RobotControl.ClassLibrary
 {
     using Newtonsoft.Json;
 
@@ -7,17 +7,17 @@ namespace RobotControl.Net
 
     class RobotData
     {
-        public float accelX { get; set; }
-        public float accelY { get; set; }
-        public float accelZ { get; set; }
-        public float compass { get; set; }
+        public float accelX   { get; set; }
+        public float accelY   { get; set; }
+        public float accelZ   { get; set; }
+        public float compass  { get; set; }
         public float distance { get; set; }
-        public float voltage { get; set; }
-        public float uv { get; set; }
-        public string status { get; set; }
+        public float voltage  { get; set; }
+        public float uv       { get; set; }
+        public string status  { get; set; }
     }
 
-    class State : IState
+    class State : RobotControlBase, IState
     {
         private RobotState robotState;
         private float obstacleDistance;
@@ -29,21 +29,21 @@ namespace RobotControl.Net
         private float compassHeading;
         private object lockObject = new object();
 
+        public State(IMediator mediator) : base(mediator) { }
+
         public RobotState RobotState
         {
             get { lock(lockObject) { return robotState      ; }}
             set
             {
-                var name = Enum.GetName(typeof(RobotState), value);
-                var len = name.Length;
-                for (var i = len-1; i > 0; i--)
+                string name = EnumUtilities.EnumValueToSpaceSeparatedString(value);
+
+                Publish(new EventDescriptor
                 {
-                    if (char.IsUpper(name[i]))
-                    {
-                        name = name.Substring(0, i) + " " + name.Substring(i);
-                    }
-                }
-                pubSub.Publish(new EventDescriptor { Name = EventName.PleaseSay, Detail = $"State now is: {name}" });
+                    Name = EventName.PleaseSay,
+                    Detail = $"State now is: {name}"
+                });
+
                 lock (lockObject)
                 {
                     robotState = value;
@@ -51,20 +51,20 @@ namespace RobotControl.Net
             }
         }
 
-        private PubSub pubSub = new PubSub();
-        public void Subscribe(IPublishTarget publisherTarget) => pubSub.Subscribe(publisherTarget);
-
-        static public State FromRobotData(RobotData data) =>
-            new State
+        private static string StateNameToSpaceSeparatedString(RobotState value)
+        {
+            var name = Enum.GetName(typeof(RobotState), value);
+            var len = name.Length;
+            for (var i = len - 1; i > 0; i--)
             {
-                BatteryVoltage = data.voltage,
-                CompassHeading = data.compass,
-                ObstacleDistance = data.distance,
-                UVLevel = data.uv,
-                XAcceleration = data.accelX,
-                YAcceleration = data.accelY,
-                ZAcceleration = data.accelZ,
-            };
+                if (char.IsUpper(name[i]))
+                {
+                    name = name.Substring(0, i) + " " + name.Substring(i);
+                }
+            }
+
+            return name;
+        }
 
         public float ObstacleDistance { get { lock(lockObject) { return obstacleDistance; }} set { lock(lockObject) { obstacleDistance = value; }}}
         public float UVLevel          { get { lock(lockObject) { return uVLevel         ; }} set { lock(lockObject) { uVLevel          = value; }}}
@@ -88,7 +88,8 @@ namespace RobotControl.Net
                     {
                         Console.WriteLine($"Robot returned status [{robotData.status}]");
                     }
-                    var state = (IState)new State()
+
+                    var state = (IState)new State(mediator)
                     {
                         BatteryVoltage = robotData.voltage,
                         CompassHeading = robotData.compass,
@@ -100,7 +101,7 @@ namespace RobotControl.Net
                     };
                     var ev = new EventDescriptor { Name = EventName.RobotData, };
                     ev.State = state;
-                    pubSub.Publish(ev);
+                    Publish(ev);
 
                 }
                 catch (Exception ex)

@@ -3,8 +3,6 @@
          xmlns="http://www.w3.org/2001/06/grammar"
          tag-format="semantics/1.0" root="Main">
 
-  <!--  -->
-
   <rule id="Main">
     <item>
       Robot <ruleref uri="#Command"/>

@@ -1,5 +1,5 @@
 ﻿
-namespace RobotControl.Net
+namespace RobotControl.ClassLibrary
 {
     using Microsoft.ML;
     using Microsoft.ML.Data;
@@ -14,36 +14,41 @@ namespace RobotControl.Net
     using System.Linq;
     using System.Threading;
 
-    public class ObjectDetector : IObjectDetector
+    public class ObjectDetector : RobotControlBase, IObjectDetector
     {
-        private readonly bool fake;
-        private readonly TinyYoloModel tinyYoloModel;
-        private readonly OnnxModelConfigurator onnxModelConfigurator;
-        private readonly OnnxOutputParser onnxOutputParser;
-        private readonly PredictionEngine<ImageInputData, TinyYoloPrediction> tinyYoloPredictionEngine;
-        private readonly string[] labelsOfObjectsToDetect;
-        private readonly object detectLock = new object();
+        private bool fake;
+        private TinyYoloModel tinyYoloModel;
+        private OnnxModelConfigurator onnxModelConfigurator;
+        private OnnxOutputParser onnxOutputParser;
+        private PredictionEngine<ImageInputData, TinyYoloPrediction> tinyYoloPredictionEngine;
+        private string[] labelsOfObjectsToDetect;
+        private object detectLock = new object();
 
         public int ImageWidth => ImageSettings.imageWidth;
         public int ImageHeight => ImageSettings.imageHeight;
         public static string[] AvailableLabels => TinyYoloModel.AvailableLabels;
         public EventName[] HandledEvents => new EventName[]{ EventName.NewImageDetected };
 
-        public ObjectDetector(bool fake, string onnxFilePath, string[] labelsOfObjectsToDetect)
+        public ObjectDetector(IMediator mediator, bool fake, string onnxFilePath, string[] labelsOfObjectsToDetect)
+            :base(mediator)
         {
-            this.fake = fake;
-            this.labelsOfObjectsToDetect = labelsOfObjectsToDetect;
-            tinyYoloModel = new TinyYoloModel(onnxFilePath);
-            onnxModelConfigurator = new OnnxModelConfigurator(tinyYoloModel);
-            onnxOutputParser = new OnnxOutputParser(tinyYoloModel);
-            tinyYoloPredictionEngine = onnxModelConfigurator.GetMlNetPredictionEngine<TinyYoloPrediction>();
+            TryCatch(() =>
+            {
+                this.fake = fake;
+                this.labelsOfObjectsToDetect = labelsOfObjectsToDetect;
+
+                tinyYoloModel = new TinyYoloModel(onnxFilePath);
+                onnxModelConfigurator = new OnnxModelConfigurator(tinyYoloModel);
+                onnxOutputParser = new OnnxOutputParser(tinyYoloModel);
+                tinyYoloPredictionEngine = onnxModelConfigurator.GetMlNetPredictionEngine<TinyYoloPrediction>();
+            });
         }
 
         public void DetectObjects(Bitmap bitmap)
         {
             if (Monitor.TryEnter(detectLock))
             {
-                try
+                TryCatch(() =>
                 {
                     var prediction = tinyYoloPredictionEngine.Predict(new ImageInputData { Image = bitmap });
                     var labels = prediction.PredictedLabels;
@@ -62,18 +67,17 @@ namespace RobotControl.Net
                     var highestConfidenceBox = filteredBoxes.First(b => b.Confidence == highestConfidence);
                     DisplayDetectedObjects(bitmap, highestConfidenceBox);
                     var bbdfb = BoundingBoxDeltaFromBitmap.FromBitmap(bitmap, highestConfidenceBox);
-                    pubSub.Publish(new EventDescriptor
+                    Publish(new EventDescriptor
                     {
                         Name = EventName.ObjectDetected,
                         Detail = JsonConvert.SerializeObject(bbdfb),
                         Value = bbdfb.XDeltaProportionFromBitmapCenter,
                         Bitmap = bitmap
                     });
-                }
-                finally
-                {
-                    Monitor.Exit(detectLock);
-                }
+                },
+                // Finally:
+                () => Monitor.Exit(detectLock)
+                );
             }
             else
             {
@@ -104,9 +108,6 @@ namespace RobotControl.Net
 
             //bitmap.Save("captured.bmp");
         }
-
-        private PubSub pubSub = new PubSub();
-        public void Subscribe(IPublishTarget publisherTarget) => pubSub.Subscribe(publisherTarget);
 
         public void OnEvent(IEventDescriptor eventDescriptor)
         {
@@ -151,7 +152,7 @@ namespace RobotControl.Net
                     CorrX        = (float)bitmap.Width  / ImageSettings.imageWidth,
                     CorrY        = (float)bitmap.Height / ImageSettings.imageHeight,
                 };
-                
+
                 var midXImg = bitmap.Width  / 2;
                 var midXBox = (box.Dimensions.X * bbdfb.CorrX) + (box.Dimensions.Width * bbdfb.CorrX / 2);
                 bbdfb.XDeltaFromBitmapCenter = R1(midXBox - midXImg);

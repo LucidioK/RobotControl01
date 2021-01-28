@@ -1,15 +1,16 @@
 ﻿
 
-namespace RobotControl.Net
+namespace RobotControl.ClassLibrary
 {
     using System;
     using System.Threading;
 
-    internal class RobotCommunicationHandler : IRobotCommunicationHandler
+    internal class RobotCommunicationHandler : RobotControlBase, IRobotCommunicationHandler
     {
         ISerialPort serialPort;
         public EventName[] HandledEvents => new EventName[] { EventName.NeedToMoveDetected };
-        public RobotCommunicationHandler(ISerialPort serialPort, int baudRate)
+        public RobotCommunicationHandler(IMediator mediator, ISerialPort serialPort, int baudRate)
+            : base(mediator)
         {
             this.serialPort = serialPort;
 
@@ -18,7 +19,7 @@ namespace RobotControl.Net
             {
                 for (int j = 1; j < 32 && !foundPort; j++)
                 {
-                    if (this.serialPort.Open(j, baudRate, OnValidDataReceivedCallback))
+                    if (this.serialPort.Open(j, baudRate, OnValidDataReceivedCallback, OnExceptionCallback))
                     {
                         foundPort = true;
                     }
@@ -29,22 +30,21 @@ namespace RobotControl.Net
 
             if (!foundPort)
             {
-                throw new Exception("Could not find serial port. Open the Arduino IDE, then open Tools/Serial Monitor and close the monitor...");
+                PublishException(new Exception("Could not find serial port. Open the Arduino IDE, then open Tools/Serial Monitor and close the monitor..."));
             }
         }
+
+        private void OnExceptionCallback(Exception ex)
+            => PublishException(ex);
 
         private void OnValidDataReceivedCallback(string s)
         {
             s = GetValidatedString(s);
             if (s != null)
             {
-                pubSub.Publish(new EventDescriptor { Name = EventName.RawRobotDataDetected, Detail = s });
+                Publish(new EventDescriptor { Name = EventName.RawRobotDataDetected, Detail = s });
             }
         }
-
-        private PubSub pubSub = new PubSub();
-
-        public void Subscribe(IPublishTarget publisherTarget) => pubSub.Subscribe(publisherTarget);
 
         public void OnEvent(IEventDescriptor eventDescriptor)
         {
@@ -60,10 +60,14 @@ namespace RobotControl.Net
 
         private static string GetValidatedString(string s)
         {
-            s = s.Trim(trimChars: new char[] { ' ', '\r', '\n', '\t' });
-            if (s != null && s.StartsWith("{") && s.EndsWith("}"))
+            if (!string.IsNullOrEmpty(s))
             {
-                return s;
+
+                s = s.Trim(trimChars: new char[] { ' ', '\r', '\n', '\t' });
+                if (s != null && s.StartsWith("{") && s.EndsWith("}"))
+                {
+                    return s;
+                }
             }
             return null;
         }

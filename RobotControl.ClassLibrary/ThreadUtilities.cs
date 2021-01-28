@@ -10,5 +10,7 @@ namespace RobotControl.ClassLibrary
             thread.Start();
             return thread.Join(timeoutInMilliseconds);
         }
+
+        public static void Noop() { }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-using RobotControl.Net;
+using RobotControl.ClassLibrary;
 
 using System;
 using System.Collections.Generic;
@@ -26,9 +26,9 @@ namespace RobotControl.UI
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window, Net.IPublishTarget
+    public partial class MainWindow : Window, IPublishTarget
     {
-        RobotControl.Net.RobotControl RobotControl;
+        RobotControl.ClassLibrary.RobotControl RobotControl;
         object robotControlLock = new object();
         List<EventName> handledEvents = new List<EventName>();
         string[] labelsOfObjectsToDetect;
@@ -45,18 +45,22 @@ namespace RobotControl.UI
             }
         }
 
-        private void startStop_Click(object sender, RoutedEventArgs e)
+        private async void startStop_ClickAsync(object sender, RoutedEventArgs e)
         {
             var content = (string)this.startStop.Content;
             if (content == "Start")
             {
                 this.baudRate = int.Parse(this.baudRateComboBox.Text);
-                this.labelsOfObjectsToDetect = GetLabelsOfObjectsToDetect();
                 this.startStop.Content = "Stop";
 
-                this.RobotControl = new Net.RobotControl(this.labelsOfObjectsToDetect, this.baudRate);
+                var useAudio = this.enableAudioCheckBox.IsChecked.GetValueOrDefault();
+
+                this.RobotControl = new ClassLibrary.RobotControl();
+                await this.RobotControl.InitializeAsync(labelsOfObjectsToDetect: this.labelsOfObjectsToDetect,
+                    baudRate: this.baudRate,
+                    UseFakeSpeaker: !useAudio,
+                    UseFakeSpeechCommandListener: !useAudio);
                 this.RobotControl.Subscribe(this);
-                
             }
             else
             {
@@ -64,75 +68,9 @@ namespace RobotControl.UI
             }
         }
 
-        private string[] GetLabelsOfObjectsToDetect()
-        {
-            var labels = new List<string>();
-            if (checkBoxAeroplane.IsChecked.GetValueOrDefault())   { labels.Add("aeroplane");   }
-            if (checkBoxBicycle.IsChecked.GetValueOrDefault())     { labels.Add("bicycle");     }
-            if (checkBoxBird.IsChecked.GetValueOrDefault())        { labels.Add("bird");        }
-            if (checkBoxBoat.IsChecked.GetValueOrDefault())        { labels.Add("boat");        }
-            if (checkBoxBottle.IsChecked.GetValueOrDefault())      { labels.Add("bottle");      }
-            if (checkBoxBus.IsChecked.GetValueOrDefault())         { labels.Add("bus");         }
-            if (checkBoxCar.IsChecked.GetValueOrDefault())         { labels.Add("car");         }
-            if (checkBoxCat.IsChecked.GetValueOrDefault())         { labels.Add("cat");         }
-            if (checkBoxChair.IsChecked.GetValueOrDefault())       { labels.Add("chair");       }
-            if (checkBoxCow.IsChecked.GetValueOrDefault())         { labels.Add("cow");         }
-            if (checkBoxDiningtable.IsChecked.GetValueOrDefault()) { labels.Add("diningtable"); }
-            if (checkBoxDog.IsChecked.GetValueOrDefault())         { labels.Add("dog");         }
-            if (checkBoxHorse.IsChecked.GetValueOrDefault())       { labels.Add("horse");       }
-            if (checkBoxMotorbike.IsChecked.GetValueOrDefault())   { labels.Add("motorbike");   }
-            if (checkBoxPerson.IsChecked.GetValueOrDefault())      { labels.Add("person");      }
-            if (checkBoxPottedplant.IsChecked.GetValueOrDefault()) { labels.Add("pottedplant"); }
-            if (checkBoxSheep.IsChecked.GetValueOrDefault())       { labels.Add("sheep");       }
-            if (checkBoxSofa.IsChecked.GetValueOrDefault())        { labels.Add("sofa");        }
-            if (checkBoxTrain.IsChecked.GetValueOrDefault())       { labels.Add("train");       }
-            if (checkBoxTvmonitor.IsChecked.GetValueOrDefault())   { labels.Add("tvmonitor");   }
-            return labels.ToArray();
-        }
+        private void EnableDisableStartStopButton() =>
+            this.startStop.IsEnabled = true;
 
-        private void checkBoxAeroplane_Checked(object sender, RoutedEventArgs e)    => EnableDisableStartStopButton();
-        private void checkBoxBicycle_Checked(object sender, RoutedEventArgs e)      => EnableDisableStartStopButton();
-        private void checkBoxBird_Checked(object sender, RoutedEventArgs e)         => EnableDisableStartStopButton();
-        private void checkBoxBoat_Checked(object sender, RoutedEventArgs e)         => EnableDisableStartStopButton();
-        private void checkBoxBottle_Checked(object sender, RoutedEventArgs e)       => EnableDisableStartStopButton();
-        private void checkBoxBus_Checked(object sender, RoutedEventArgs e)          => EnableDisableStartStopButton();
-        private void checkBoxCar_Checked(object sender, RoutedEventArgs e)          => EnableDisableStartStopButton();
-        private void checkBoxCat_Checked(object sender, RoutedEventArgs e)          => EnableDisableStartStopButton();
-        private void checkBoxChair_Checked(object sender, RoutedEventArgs e)        => EnableDisableStartStopButton();
-        private void checkBoxCow_Checked(object sender, RoutedEventArgs e)          => EnableDisableStartStopButton();
-        private void checkBoxDiningtable_Checked(object sender, RoutedEventArgs e)  => EnableDisableStartStopButton();
-        private void checkBoxDog_Checked(object sender, RoutedEventArgs e)          => EnableDisableStartStopButton();
-        private void checkBoxHorse_Checked(object sender, RoutedEventArgs e)        => EnableDisableStartStopButton();
-        private void checkBoxMotorbike_Checked(object sender, RoutedEventArgs e)    => EnableDisableStartStopButton();
-        private void checkBoxPerson_Checked(object sender, RoutedEventArgs e)       => EnableDisableStartStopButton();
-        private void checkBoxPottedplant_Checked(object sender, RoutedEventArgs e)  => EnableDisableStartStopButton();
-        private void checkBoxSheep_Checked(object sender, RoutedEventArgs e)        => EnableDisableStartStopButton();
-        private void checkBoxSofa_Checked(object sender, RoutedEventArgs e)         => EnableDisableStartStopButton();
-        private void checkBoxTrain_Checked(object sender, RoutedEventArgs e)        => EnableDisableStartStopButton();
-        private void checkBoxTvmonitor_Checked(object sender, RoutedEventArgs e)    => EnableDisableStartStopButton();
-
-        private void EnableDisableStartStopButton()                                 =>
-            this.startStop.IsEnabled =
-                checkBoxAeroplane.IsChecked.GetValueOrDefault()   ||
-                checkBoxBicycle.IsChecked.GetValueOrDefault()     ||
-                checkBoxBird.IsChecked.GetValueOrDefault()        ||
-                checkBoxBoat.IsChecked.GetValueOrDefault()        ||
-                checkBoxBottle.IsChecked.GetValueOrDefault()      ||
-                checkBoxBus.IsChecked.GetValueOrDefault()         ||
-                checkBoxCar.IsChecked.GetValueOrDefault()         ||
-                checkBoxCat.IsChecked.GetValueOrDefault()         ||
-                checkBoxChair.IsChecked.GetValueOrDefault()       ||
-                checkBoxCow.IsChecked.GetValueOrDefault()         ||
-                checkBoxDiningtable.IsChecked.GetValueOrDefault() ||
-                checkBoxDog.IsChecked.GetValueOrDefault()         ||
-                checkBoxHorse.IsChecked.GetValueOrDefault()       ||
-                checkBoxMotorbike.IsChecked.GetValueOrDefault()   ||
-                checkBoxPerson.IsChecked.GetValueOrDefault()      ||
-                checkBoxPottedplant.IsChecked.GetValueOrDefault() ||
-                checkBoxSheep.IsChecked.GetValueOrDefault()       ||
-                checkBoxSofa.IsChecked.GetValueOrDefault()        ||
-                checkBoxTrain.IsChecked.GetValueOrDefault()       ||
-                checkBoxTvmonitor.IsChecked.GetValueOrDefault();
 
         public void OnEvent(IEventDescriptor eventDescriptor)
         {
@@ -187,6 +125,11 @@ namespace RobotControl.UI
                     this.Dispatcher.Invoke(()     =>
                     {
                         this.lblAccelX.Content    = eventDescriptor.State.XAcceleration.ToString("0.0");
+
+                        DisplayAcceleration(this.accelXImage, eventDescriptor.State.XAcceleration, 1f, 2f, 3.5f);
+                        DisplayAcceleration(this.accelYImage, eventDescriptor.State.YAcceleration, 1f, 2f, 3.5f);
+                        DisplayAcceleration(this.accelZImage, (eventDescriptor.State.ZAcceleration -10) % 10, 1f, 2f, 3.5f);
+                        DisplayCompass(this.CompassImage, eventDescriptor.State.CompassHeading);
                         this.lblAccelY.Content    = eventDescriptor.State.YAcceleration.ToString("0.0");
                         this.lblAccelZ.Content    = eventDescriptor.State.ZAcceleration.ToString("0.0");
                         this.lblDistance.Content  = eventDescriptor.State.ObstacleDistance.ToString("0.0");
@@ -200,8 +143,57 @@ namespace RobotControl.UI
                         this.lblPleaseSay.Content = eventDescriptor.Detail;
                     });
                     break;
+                case EventName.Exception:
+
+                    break;
 
             }
+        }
+
+        private void DisplayCompass(System.Windows.Controls.Image compassImage, float compassHeading)
+        {
+            var bitmap = new Bitmap((int)compassImage.Width, (int)compassImage.Height);
+            var backgroundColor = new System.Drawing.SolidBrush(System.Drawing.Color.LightYellow);
+
+            // We receive 0 as the top quadrant, while Math considers 0 as the right quadrant.
+            compassHeading = (float)((((double)compassHeading + 90) % 360) * Math.PI / 180.0);
+            System.Drawing.Pen blackPen = new System.Drawing.Pen(System.Drawing.Color.Black, 1);
+
+            using (var gr = Graphics.FromImage(bitmap))
+            {
+                gr.FillRectangle(backgroundColor, 0, 0, bitmap.Width, bitmap.Height);
+                float hw = (float)(bitmap.Width / 2.0);
+                float hh = (float)(bitmap.Height / 2.0);
+                float x1 = hw;
+                float y1 = hh;
+                float si = (float)Math.Sin(compassHeading) * -1;
+                float co = (float)Math.Cos(compassHeading) * -1;
+                float x2 = x1 + (hw * co);
+                float y2 = y1 + (hh * si);
+                gr.DrawLine(blackPen, x1, y1, x2, y2);
+            }
+
+            compassImage.Source = BitmapToBitmapImage(bitmap);
+        }
+
+        private void DisplayAcceleration(System.Windows.Controls.Image accelDisplay, float acceleration, float greenThreshold, float yellowThreshold, float redThreshold)
+        {
+            var bitmap = new Bitmap((int)accelDisplay.Width, (int)accelDisplay.Height);
+            System.Drawing.Brush backgroundColor = null;
+            if (Math.Abs(acceleration) >= redThreshold) backgroundColor = new System.Drawing.SolidBrush(System.Drawing.Color.Red);
+            else if (Math.Abs(acceleration) >= yellowThreshold) backgroundColor = new System.Drawing.SolidBrush(System.Drawing.Color.Yellow);
+            else backgroundColor = new System.Drawing.SolidBrush(System.Drawing.Color.Green);
+            using (var gr = Graphics.FromImage(bitmap))
+            {
+                gr.FillRectangle(backgroundColor, 0, 0, bitmap.Width, bitmap.Height);
+                float x1 = (float)(bitmap.Width / 2.0);
+                float y1 = bitmap.Height - 1;
+                float x2 = x1 + bitmap.Width * (acceleration / 10);
+                float y2 = (acceleration / 10) * bitmap.Height;
+                gr.DrawLine(new System.Drawing.Pen(System.Drawing.Color.Black, 1), x1, y1, x2, y2);
+            }
+
+            accelDisplay.Source = BitmapToBitmapImage(bitmap);
         }
 
         private BitmapImage BitmapToBitmapImage(Bitmap src)
@@ -214,6 +206,28 @@ namespace RobotControl.UI
             image.StreamSource = ms;
             image.EndInit();
             return image;
+        }
+
+        private void objectsToDetectComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var labels = new List<string>();
+            foreach (var item in objectsToDetectComboBox.Items)
+            {
+                var cb = item as CheckBox;
+                if (cb != null && cb.IsChecked.GetValueOrDefault())
+                {
+                    labels.Add(cb.Content.ToString());
+                }
+
+            }
+
+            labelsOfObjectsToDetect = labels.ToArray();
+            startStop.IsEnabled = labels.Count > 0 && startStop.Content.ToString() == "Start";
+        }
+
+        private void objectsToDetectSelectionChanged(object sender, RoutedEventArgs e)
+        {
+            objectsToDetectComboBox_SelectionChanged(null, null);
         }
     }
 }

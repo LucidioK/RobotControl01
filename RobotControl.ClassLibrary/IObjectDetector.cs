@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace RobotControl.Net
+namespace RobotControl.ClassLibrary
 {
     public interface IObjectDetector : ISubscriptionTarget, IPublishTarget
     {

@@ -77,11 +77,12 @@ namespace RobotControl.ClassLibrary
 
         public void OnEvent(IEventDescriptor eventDescriptor)
         {
-            if (eventDescriptor.Name == EventName.RawRobotDataDetected)
+            TryCatch(() =>
             {
-                RobotData robotData;
-                try
+                if (eventDescriptor.Name == EventName.RawRobotDataDetected)
                 {
+                    RobotData robotData;
+
                     System.Diagnostics.Debug.WriteLine($"-->DATA FROM ROBOT: {eventDescriptor.Detail}");
                     robotData = JsonConvert.DeserializeObject<RobotData>(eventDescriptor.Detail);
                     if (!string.IsNullOrEmpty(robotData.status))
@@ -102,13 +103,8 @@ namespace RobotControl.ClassLibrary
                     var ev = new EventDescriptor { Name = EventName.RobotData, };
                     ev.State = state;
                     Publish(ev);
-
                 }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"--> {nameof(State)}:{nameof(OnEvent)} exception: {ex.Message}/{ex.StackTrace}");
-                }
-            }
+            });
         }
     }
 }

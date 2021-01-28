@@ -3,6 +3,7 @@
 using RobotControl.ClassLibrary;
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -29,10 +30,11 @@ namespace RobotControl.UI
     public partial class MainWindow : Window, IPublishTarget
     {
         RobotControl.ClassLibrary.RobotControl RobotControl;
-        object robotControlLock = new object();
+        object exceptionLock = new object();
         List<EventName> handledEvents = new List<EventName>();
         string[] labelsOfObjectsToDetect;
         int baudRate;
+        ConcurrentBag<string> exceptionsToBeIgnored = new ConcurrentBag<string>();
 
         public EventName[] HandledEvents => this.Dispatcher.Invoke<EventName[]>(() => handledEvents.ToArray());
 
@@ -144,11 +146,31 @@ namespace RobotControl.UI
                     });
                     break;
                 case EventName.Exception:
+                    lock (exceptionLock)
+                    {
+                        if (exceptionsToBeIgnored.Contains(RemoveNumbers(eventDescriptor.Detail)))
+                        {
+                            break;
+                        }
 
-                    break;
+                        var choice = MessageBox.Show($"Exception:\n{eventDescriptor.Detail}\nYes to ignore this exception, No to continue, Cancel to exit.", "Exception", MessageBoxButton.YesNoCancel, MessageBoxImage.Error);
+                        if (choice == MessageBoxResult.Cancel)
+                        {
+                            Environment.Exit(1);
+                        }
+
+                        if (choice == MessageBoxResult.Yes)
+                        {
+                            exceptionsToBeIgnored.Add(RemoveNumbers(eventDescriptor.Detail));
+                        }
+
+                        break;
+                    }
 
             }
         }
+
+        private string RemoveNumbers(string s) => s.Replace("0", "").Replace("1", "").Replace("2", "").Replace("3", "").Replace("4", "").Replace("5", "").Replace("6", "").Replace("7", "").Replace("8", "").Replace("9", "");
 
         private void DisplayCompass(System.Windows.Controls.Image compassImage, float compassHeading)
         {

@@ -63,16 +63,19 @@
                 <Label x:Name="label1_Copy" Content="AccelX:" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="70"/>
                 <Label x:Name="lblAccelX" Content="__ax___" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="43"/>
                 <Image x:Name="accelXImage" HorizontalAlignment="Left" Height="15" Margin="0,5,0,0" VerticalAlignment="Top" Width="15"/>
+                <Image x:Name="accelXChart" HorizontalAlignment="Left" Height="15" Margin="0,5,0,0" VerticalAlignment="Top" Width="120"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Margin="5,5,5,5" Orientation="Horizontal">
                 <Label x:Name="label1_Copy1" Content="AccelY:" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="70"/>
                 <Label x:Name="lblAccelY" Content="__ay__" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="38"/>
                 <Image x:Name="accelYImage" HorizontalAlignment="Left" Height="15" Margin="0,5,0,0" VerticalAlignment="Top" Width="15"/>
+                <Image x:Name="accelYChart" HorizontalAlignment="Left" Height="15" Margin="0,5,0,0" VerticalAlignment="Top" Width="120"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Margin="5,5,5,5" Orientation="Horizontal">
                 <Label x:Name="label1_Copy2" Content="AccelZ:" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="70"/>
                 <Label x:Name="lblAccelZ" Content="__az__" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="38"/>
                 <Image x:Name="accelZImage" HorizontalAlignment="Left" Height="15" Margin="0,5,0,0" VerticalAlignment="Top" Width="15"/>
+                <Image x:Name="accelZChart" HorizontalAlignment="Left" Height="15" Margin="0,5,0,0" VerticalAlignment="Top" Width="120"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Margin="5,5,5,5" Orientation="Horizontal">
                 <Label x:Name="label1_Copy3" Content="Compass:" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="70"/>

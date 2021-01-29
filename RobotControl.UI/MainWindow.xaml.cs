@@ -30,6 +30,9 @@ namespace RobotControl.UI
     public partial class MainWindow : Window, IPublishTarget
     {
         RobotControl.ClassLibrary.RobotControl RobotControl;
+        TimeChart accelXTimeChart;
+        TimeChart accelYTimeChart;
+        TimeChart accelZTimeChart;
         object exceptionLock = new object();
         List<EventName> handledEvents = new List<EventName>();
         string[] labelsOfObjectsToDetect;
@@ -41,6 +44,9 @@ namespace RobotControl.UI
         public MainWindow()
         {
             InitializeComponent();
+            accelXTimeChart = new TimeChart(accelXChart, -10, 10, TimeSpan.FromMilliseconds(100));
+            accelYTimeChart = new TimeChart(accelYChart, -10, 10, TimeSpan.FromMilliseconds(100));
+            accelZTimeChart = new TimeChart(accelZChart, -10, 10, TimeSpan.FromMilliseconds(100));
             foreach (var eventName in typeof(EventName).GetEnumValues())
             {
                 handledEvents.Add((EventName)eventName);
@@ -90,7 +96,7 @@ namespace RobotControl.UI
                     this.Dispatcher.Invoke(()            =>
                     {
                         this.lblObjectData.Content       = eventDescriptor.Detail;
-                        this.objectDetectionImage.Source = BitmapToBitmapImage(eventDescriptor.Bitmap);
+                        this.objectDetectionImage.Source = Utilities.BitmapToBitmapImage(eventDescriptor.Bitmap);
                     });
                     break;
                 case EventName.SensorValueDetected:
@@ -128,9 +134,9 @@ namespace RobotControl.UI
                     {
                         this.lblAccelX.Content    = eventDescriptor.State.XAcceleration.ToString("0.0");
 
-                        DisplayAcceleration(this.accelXImage, eventDescriptor.State.XAcceleration, 1f, 2f, 3.5f);
-                        DisplayAcceleration(this.accelYImage, eventDescriptor.State.YAcceleration, 1f, 2f, 3.5f);
-                        DisplayAcceleration(this.accelZImage, (eventDescriptor.State.ZAcceleration -10) % 10, 1f, 2f, 3.5f);
+                        DisplayAcceleration(this.accelXImage, this.accelXTimeChart, eventDescriptor.State.XAcceleration, 1f, 2f, 3.5f);
+                        DisplayAcceleration(this.accelYImage, this.accelYTimeChart, eventDescriptor.State.YAcceleration, 1f, 2f, 3.5f);
+                        DisplayAcceleration(this.accelZImage, this.accelZTimeChart, (eventDescriptor.State.ZAcceleration -10) % 10, 1f, 2f, 3.5f);
                         DisplayCompass(this.CompassImage, eventDescriptor.State.CompassHeading);
                         this.lblAccelY.Content    = eventDescriptor.State.YAcceleration.ToString("0.0");
                         this.lblAccelZ.Content    = eventDescriptor.State.ZAcceleration.ToString("0.0");
@@ -195,19 +201,25 @@ namespace RobotControl.UI
                 gr.DrawLine(blackPen, x1, y1, x2, y2);
             }
 
-            compassImage.Source = BitmapToBitmapImage(bitmap);
+            compassImage.Source = Utilities.BitmapToBitmapImage(bitmap);
         }
 
-        private void DisplayAcceleration(System.Windows.Controls.Image accelDisplay, float acceleration, float greenThreshold, float yellowThreshold, float redThreshold)
+        private void DisplayAcceleration(
+            System.Windows.Controls.Image accelDisplay, 
+            TimeChart timeChart,
+            float acceleration, 
+            float greenThreshold, 
+            float yellowThreshold, 
+            float redThreshold)
         {
             var bitmap = new Bitmap((int)accelDisplay.Width, (int)accelDisplay.Height);
-            System.Drawing.Brush backgroundColor = null;
-            if (Math.Abs(acceleration) >= redThreshold) backgroundColor = new System.Drawing.SolidBrush(System.Drawing.Color.Red);
-            else if (Math.Abs(acceleration) >= yellowThreshold) backgroundColor = new System.Drawing.SolidBrush(System.Drawing.Color.Yellow);
-            else backgroundColor = new System.Drawing.SolidBrush(System.Drawing.Color.Green);
+            System.Drawing.Color backgroundColor = System.Drawing.Color.Green;
+            if (Math.Abs(acceleration) >= redThreshold) backgroundColor = System.Drawing.Color.Red;
+            else if (Math.Abs(acceleration) >= yellowThreshold) backgroundColor = System.Drawing.Color.Yellow;
+            var backgroundBrush = new System.Drawing.SolidBrush(backgroundColor);
             using (var gr = Graphics.FromImage(bitmap))
             {
-                gr.FillRectangle(backgroundColor, 0, 0, bitmap.Width, bitmap.Height);
+                gr.FillRectangle(backgroundBrush, 0, 0, bitmap.Width, bitmap.Height);
                 float x1 = (float)(bitmap.Width / 2.0);
                 float y1 = bitmap.Height - 1;
                 float x2 = x1 + bitmap.Width * (acceleration / 10);
@@ -215,19 +227,9 @@ namespace RobotControl.UI
                 gr.DrawLine(new System.Drawing.Pen(System.Drawing.Color.Black, 1), x1, y1, x2, y2);
             }
 
-            accelDisplay.Source = BitmapToBitmapImage(bitmap);
-        }
+            accelDisplay.Source = Utilities.BitmapToBitmapImage(bitmap);
 
-        private BitmapImage BitmapToBitmapImage(Bitmap src)
-        {
-            MemoryStream ms = new MemoryStream();
-            ((System.Drawing.Bitmap)src).Save(ms, System.Drawing.Imaging.ImageFormat.Bmp);
-            BitmapImage image = new BitmapImage();
-            image.BeginInit();
-            ms.Seek(0, SeekOrigin.Begin);
-            image.StreamSource = ms;
-            image.EndInit();
-            return image;
+            timeChart?.Post(acceleration, backgroundColor);
         }
 
         private void objectsToDetectComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

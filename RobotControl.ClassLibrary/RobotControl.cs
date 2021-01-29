@@ -66,7 +66,7 @@ namespace RobotControl.ClassLibrary
                     mediator.AddTarget((IPubSubBase)speaker);
                 }
 
-                var s = "Worker Gary is Ready. These are the commands I can understand: ";
+                var s = "Robot is Ready. These are the commands I can understand: ";
                 s += string.Join(", ", speechCommandListener.Commands);
                 mediator.OnEvent(new EventDescriptor { Name = EventName.PleaseSay, Detail = s });
             });

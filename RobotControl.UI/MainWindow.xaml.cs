@@ -60,6 +60,9 @@ namespace RobotControl.UI
             }
             else
             {
+                var eventDescriptor = new EventDescriptor { Name = EventName.NeedToMoveDetected, Detail = "{'operation':'motor','l':0,'r':0}" };
+                this.RobotControl.Publish(eventDescriptor);
+                eventDescriptor.WaitEvent.WaitOne();
                 Environment.Exit(0);
             }
         }

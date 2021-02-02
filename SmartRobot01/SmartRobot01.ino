@@ -1,16 +1,17 @@
 
 #include <SPI.h>
 #include <ArduinoJson.h>
-#include "UltraSonicDistanceDetector.h"
 #include <Adafruit_SI1145.h>
 #include <Adafruit_LSM303_Accel.h>
 #include <Adafruit_LSM303DLH_Mag.h>
 #include <Adafruit_Sensor.h>
 #include "ArduinoMotorShieldL298P.h"
 #include "VoltageReader.h"
+#include <VL53L0X.h>
 
 VoltageReader              voltageReader    (A0, 47000, 33000);
 
+VL53L0X                        distance;
 Adafruit_SI1145                uv      = Adafruit_SI1145();
 Adafruit_LSM303_Accel_Unified  accel   = Adafruit_LSM303_Accel_Unified(54321);
 Adafruit_LSM303DLH_Mag_Unified mag     = Adafruit_LSM303DLH_Mag_Unified(12345);
@@ -90,7 +91,7 @@ void sendSensorValues()
   else
     outStatus += "magNOK;";  
 
-  //doc["distance"] = distanceDetector.Get();
+  doc["distance"] = distance.readRangeContinuousMillimeters() / 10;
   doc["voltage"]  = voltageReader.Get();
 
   if (!uvOK)  outStatus += "uvNOK;";
@@ -112,19 +113,50 @@ void sendSensorValues()
   Serial.println(s);
 }
 
-void setup() {
-  Serial.begin(115200);
+void initializeDistance()
+{
+  Wire.begin();
+
+  distance.init();
+  distance.setTimeout(500);
+
+  // Start continuous back-to-back mode (take readings as
+  // fast as possible).  To use continuous timed mode
+  // instead, provide a desired inter-measurement period in
+  // ms (e.g. distance.startContinuous(100)).
+  distance.startContinuous();
+}
+
+void initializeUV()
+{
+  uvOK = uv.begin();
+}
+
+void initializeMag()
+{
   mag.enableAutoRange(true);
   magOK   = mag.begin();
+}
+
+void initializeAccel()
+{
   accelOK = accel.begin();
-  uvOK = uv.begin();
 
   if (accelOK)
   {
     accel.setRange(LSM303_RANGE_4G);
   }
+}
 
-  Serial.println("Device is ready 20209823 1243");  
+
+void setup() {
+  Serial.begin(115200);
+  initializeDistance();
+  initializeUV();
+  initializeMag();
+  initializeAccel();
+
+  Serial.println("Device is ready 20210202 1411");  
 }
 
 void loop() {

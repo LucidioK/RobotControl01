@@ -74,7 +74,7 @@ namespace RobotControl.ClassLibrary
             rotateInPlace();
         }
 
-        private void rotateInPlace() => motor(44, -44);
+        private void rotateInPlace() => motor(64, -64);
 
 
         private void startEvadingToShelter()
@@ -92,11 +92,11 @@ namespace RobotControl.ClassLibrary
             var objectPosition = eventDescriptor.Value * 100;
             if (objectPosition < -5) // object is to the left
             {
-                motor(-44, 44);
+                motor(-64, 64);
             }
             else if (objectPosition > 5) // object is to the right
             {
-                motor(44, -44);
+                motor(64, -64);
             }
             else // object is straight ahead, CHARGE!
             {

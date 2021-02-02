@@ -42,6 +42,7 @@ namespace RobotControl.ClassLibrary
                 if (publishTarget.HandledEvents.Contains(eventDescriptor.Name))
                 {
                     publishTarget.OnEvent(eventDescriptor);
+                    eventDescriptor.EventWasProcessed();
                 }
             }
         }

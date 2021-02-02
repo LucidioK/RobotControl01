@@ -1,21 +1,3 @@
-/*
-class MotorPins
-{
-public:
-	int DirectionPin;
-	int SpeedPin;
-	int BrakePin;
-	int CurrentPin;
-  
-  MotorPins(int directionPin, int speedPin, int brakePin, int currentPin)
-  {
-	  DirectionPin = directionPin;
-	  SpeedPin     = speedPin    ;
-	  BrakePin     = brakePin    ;
-	  CurrentPin   = currentPin  ;
-  }
-}
-*/
 class ArduinoMotorShieldL298P
 {
 private:
@@ -30,7 +12,7 @@ private:
 
   void setSpeedInternal(int speed, char motorId)
   {
-    int brk = (motorId == 'A') ? BreakA : BreakB;
+    int brk = (motorId == 'A') ? BrakeA : BrakeB;
 
 	if (speed == 0)
 	{
@@ -59,10 +41,9 @@ public:
     pinMode(BrakeB, OUTPUT);  //Initiates Brake Channel B pin
   }
 
-  void SetSpeed(int speedA, int speedB)
+  void setSpeed(int speedA, int speedB)
   {
-	setSpeedInternal(speedA, 'A');
-	setSpeedInternal(speedB, 'B');
+  	setSpeedInternal(speedA, 'A');
+  	setSpeedInternal(speedB, 'B');
   }
 };
-

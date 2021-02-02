@@ -10,7 +10,6 @@
 #include "VoltageReader.h"
 
 VoltageReader              voltageReader    (A0, 47000, 33000);
-UltraSonicDistanceDetector distanceDetector (/*TRIGPIN*/3, /*ECHOPIN*/2);
 
 Adafruit_SI1145                uv      = Adafruit_SI1145();
 Adafruit_LSM303_Accel_Unified  accel   = Adafruit_LSM303_Accel_Unified(54321);
@@ -19,14 +18,13 @@ bool                           accelOK = false;
 bool                           magOK   = false;
 bool                           uvOK    = false;
 
-
-ArduinoMotorShieldL298P arduinoMotorShieldL298P();
+ArduinoMotorShieldL298P        motors  = ArduinoMotorShieldL298P();
 
 String outStatus;
 
 void controlMotors(int l, int r)
 {
-  arduinoMotorShieldL298P.setSpeed(l, r);
+  motors.setSpeed(l, r);
 }
 
 void readAndDispatchCommands()
@@ -92,7 +90,7 @@ void sendSensorValues()
   else
     outStatus += "magNOK;";  
 
-  doc["distance"] = distanceDetector.Get();
+  //doc["distance"] = distanceDetector.Get();
   doc["voltage"]  = voltageReader.Get();
 
   if (!uvOK)  outStatus += "uvNOK;";

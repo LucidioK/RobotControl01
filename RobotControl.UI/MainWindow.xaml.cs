@@ -6,21 +6,9 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Animation;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace RobotControl.UI
 {
@@ -75,10 +63,6 @@ namespace RobotControl.UI
                 Environment.Exit(0);
             }
         }
-
-        private void EnableDisableStartStopButton() =>
-            this.startStop.IsEnabled = true;
-
 
         public void OnEvent(IEventDescriptor eventDescriptor)
         {
@@ -205,11 +189,11 @@ namespace RobotControl.UI
         }
 
         private void DisplayAcceleration(
-            System.Windows.Controls.Image accelDisplay, 
+            System.Windows.Controls.Image accelDisplay,
             TimeChart timeChart,
-            float acceleration, 
-            float greenThreshold, 
-            float yellowThreshold, 
+            float acceleration,
+            float greenThreshold,
+            float yellowThreshold,
             float redThreshold)
         {
             var bitmap = new Bitmap((int)accelDisplay.Width, (int)accelDisplay.Height);

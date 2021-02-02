@@ -6,7 +6,7 @@
 #include <Adafruit_LSM303_Accel.h>
 #include <Adafruit_LSM303DLH_Mag.h>
 #include <Adafruit_Sensor.h>
-#include "L298NX2.h"
+#include "ArduinoMotorShieldL298P.h"
 #include "VoltageReader.h"
 
 VoltageReader              voltageReader    (A0, 47000, 33000);
@@ -19,28 +19,14 @@ bool                           accelOK = false;
 bool                           magOK   = false;
 bool                           uvOK    = false;
 
-const int EN_A = 4, IN1_A = 5, IN2_A = 7, IN1_B = 8, IN2_B = 12, EN_B = 13;
-L298NX2 motors(EN_A, IN1_A, IN2_A, EN_B, IN1_B, IN2_B);
+
+ArduinoMotorShieldL298P arduinoMotorShieldL298P();
 
 String outStatus;
 
 void controlMotors(int l, int r)
 {
-  bool rReverse = (r < 0), lReverse = (l < 0);
-  r = min(abs(r),220);
-  l = min(abs(l),220);
-  if (r < 40 && l < 40)
-  {
-    Serial.print("StoMot.");
-    motors.stop();
-  }
-  else
-  {
-    motors.setSpeedB(l);
-    if (lReverse) { motors.backwardB(); } else { motors.forwardB(); }
-    motors.setSpeedA(r);
-    if (rReverse) { motors.backwardA(); } else { motors.forwardA(); }
-  }  
+  arduinoMotorShieldL298P.setSpeed(l, r);
 }
 
 void readAndDispatchCommands()

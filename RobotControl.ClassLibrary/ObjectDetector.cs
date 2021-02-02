@@ -81,7 +81,7 @@ namespace RobotControl.ClassLibrary
             }
             else
             {
-                Console.WriteLine("-->Already detecting object, out!");
+                System.Diagnostics.Debug.WriteLine("-->Already detecting object, out!");
             }
         }
 

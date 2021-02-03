@@ -27,30 +27,31 @@
                 <ComboBoxItem Content="230400"/>
             </ComboBox>
             <Label x:Name="label" Content="Objects to detect:" Margin="5,5,5,5" />
-            <ComboBox x:Name="objectsToDetectComboBox" Margin="5,5,5,5" SelectionChanged="objectsToDetectComboBox_SelectionChanged">
-                <CheckBox Content="Aeroplane"   Click="objectsToDetectSelectionChanged"   />
-                <CheckBox Content="Bicycle"     Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Bird"        Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Boat"        Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Bottle"      Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Bus"         Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Car"         Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Cat"         Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Chair"       Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Cow"         Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Diningtable" Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Dog"         Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Horse"       Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Motorbike"   Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Person"      Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Pottedplant" Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Sheep"       Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Sofa"        Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Train"       Click="objectsToDetectSelectionChanged" />
-                <CheckBox Content="Tvmonitor"   Click="objectsToDetectSelectionChanged" />
-            </ComboBox>
-            <Separator Margin="5,5,5,5"  />
-            <Button x:Name="startStop" Content="Start" Margin="5,5,5,5" Click="startStop_ClickAsync" IsEnabled="False"/>
+            <StackPanel Grid.Column="0" Margin="5,5,5,5" Orientation="Horizontal">
+                <ComboBox x:Name="objectsToDetectComboBox" Margin="5,0,5,0" Width="100" SelectionChanged="objectsToDetectComboBox_SelectionChanged">
+                    <CheckBox Content="Aeroplane"   Click="objectsToDetectSelectionChanged"   />
+                    <CheckBox Content="Bicycle"     Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Bird"        Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Boat"        Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Bottle"      Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Bus"         Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Car"         Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Cat"         Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Chair"       Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Cow"         Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Diningtable" Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Dog"         Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Horse"       Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Motorbike"   Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Person"      Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Pottedplant" Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Sheep"       Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Sofa"        Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Train"       Click="objectsToDetectSelectionChanged" />
+                    <CheckBox Content="Tvmonitor"   Click="objectsToDetectSelectionChanged" />
+                </ComboBox>
+                <Button x:Name="startStop" Content="Start" Click="startStop_ClickAsync" IsEnabled="False"/>
+            </StackPanel>
             <Image x:Name="objectDetectionImage" Margin="5,5,5,5" Height="152"  />
 
         </StackPanel>

@@ -16,15 +16,15 @@
             <CheckBox x:Name="enableAudioCheckBox" Content="Enable Audio" Margin="5,5,5,5" IsChecked="True"/>
             <Label x:Name="label2" Content="Serial port speed:" Margin="5,5,5,5" />
             <ComboBox x:Name="baudRateComboBox" Margin="5,5,5,5" >
-                <ComboBoxItem Content="2400"/>
-                <ComboBoxItem Content="4800"/>
-                <ComboBoxItem Content="9600"/>
-                <ComboBoxItem Content="19200"/>
-                <ComboBoxItem Content="38400"/>
-                <ComboBoxItem Content="57600"/>
-                <ComboBoxItem Content="74880"/>
+                <ComboBoxItem Content="2400"                    />
+                <ComboBoxItem Content="4800"                    />
+                <ComboBoxItem Content="9600"                    />
+                <ComboBoxItem Content="19200"                   />
+                <ComboBoxItem Content="38400"                   />
+                <ComboBoxItem Content="57600"                   />
+                <ComboBoxItem Content="74880"                   />
                 <ComboBoxItem Content="115200" IsSelected="True"/>
-                <ComboBoxItem Content="230400"/>
+                <ComboBoxItem Content="230400"                  />
             </ComboBox>
             <Label x:Name="label" Content="Objects to detect:" Margin="5,5,5,5" />
             <StackPanel Grid.Column="0" Margin="5,5,5,5" Orientation="Horizontal">

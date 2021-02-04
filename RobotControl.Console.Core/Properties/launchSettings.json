@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RobotControl.Console.Core": {
+      "commandName": "Project",
+      "commandLineArgs": "-Labels \"Person,Cat\""
+    }
+  }
+}

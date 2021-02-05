@@ -20,6 +20,6 @@
   </Target>
 
   <ItemGroup>
-    <PackageReference Include="System.IO.Ports" Version="5.0.0" />
+    <ProjectReference Include="..\RobotControl.ClassLibrary.Standard\RobotControl.ClassLibrary.Standard.csproj" />
   </ItemGroup>
 </Project>

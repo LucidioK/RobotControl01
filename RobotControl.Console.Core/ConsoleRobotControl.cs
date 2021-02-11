@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 
 using Newtonsoft.Json;
 
@@ -19,13 +20,27 @@ namespace RobotControl
             public string Value = string.Empty;
             public ConsoleColor Color = Console.ForegroundColor;
             public Point Point;
+            private int windowWidth = Console.WindowWidth;
+            private int windowHeight = Console.WindowHeight;
+            private string halfWidth = new string(' ', Console.WindowWidth / 2);
             public void Display()
             {
+                // Clean one line above, one line below.
+                Clean(-1);
+                Clean(+1);
+
+                // Now show value.
                 Console.SetCursorPosition(Point.X, Point.Y);
                 Console.Write($"{Name}: ");
                 Console.ForegroundColor = Color;
-                Console.Write($"{Value}    ");
+                Console.Write($"{Value}{halfWidth}");
                 Console.ResetColor();
+            }
+
+            private void Clean(int yDelta)
+            {
+                Console.SetCursorPosition(Point.X, Math.Max(Point.Y + yDelta, 0));
+                Console.Write(halfWidth.Substring(0, Math.Min(halfWidth.Length, windowWidth - Point.X)));
             }
         }
 
@@ -34,12 +49,11 @@ namespace RobotControl
         private static global::RobotControl.ClassLibrary.RobotControl RobotControl;
         List<List<string>> dataFields = new List<List<string>>()
         {
-            new List<string>{ "AccelX",   "AccelY",  "AccelZ" },
-            new List<string>{ "Distance", "Compass" },
-            new List<string>{ "MotorL", "MotorR", "Voltage" },
-            new List<string>{ "PleaseSay" },
-            new List<string>{ "Data" },
-            new List<string>{ "Message" }
+            new List<string>{ "AcX", "AcY", "AcZ" },
+            new List<string>{ "Dcm", "Cmp", "XDl" },
+            new List<string>{ "MoL", "MoR", "Vlt" },
+            new List<string>{ "Say" },
+            new List<string>{ "Msg" }
         };
 
         List<DataDisplay> dataDisplays = new List<DataDisplay>();
@@ -49,48 +63,77 @@ namespace RobotControl
             switch (eventDescriptor.Name)
             {
                 case EventName.VoiceCommandDetected:
+                {
                     break;
-                case EventName.RainDetected:
-                    break;
-                case EventName.ObjectDetected:
-                    SetDisplay("Data", eventDescriptor.Detail);
-                    break;
-                case EventName.SensorValueDetected:
-                    break;
-                case EventName.NeedToMoveDetected:
-                    var details = JsonConvert.DeserializeObject<Dictionary<string, object>>(eventDescriptor.Detail);
-                    SetDisplay("MotorL", details["l"].ToString());
-                    SetDisplay("MotorR", details["r"].ToString());
-                    break;
-                //{
-                //    var details = JsonConvert.DeserializeObject<Dictionary<string, object>>(eventDescriptor.Detail);
-                //    this.Dispatcher.Invoke(() =>
-                //    {
-                //        this.lblMotorL.Content = details.ContainsKey("l") ? details["l"].ToString() : "_";
-                //        this.lblMotorR.Content = details.ContainsKey("r") ? details["r"].ToString() : "_"; ;
-                //    });
-                //    break;
-                //}
-                case EventName.NewImageDetected:
-                    break;
-                case EventName.RawRobotDataDetected:
+                }
 
+                case EventName.RainDetected:
+                {
                     break;
+                }
+
+                case EventName.ObjectDetected:
+                {
+                    try
+                    {
+                        var details = JsonConvert.DeserializeObject<Dictionary<string, object>>(eventDescriptor.Detail);
+                        var xd = (float)((double)details["XDeltaFromBitmapCenter"]);
+                        SetDisplay("XDl", xd.ToString("0.0"), GetColorByThresholds(xd, 10f, 5f));
+                    }
+                    catch (Exception) { }
+                    break;
+                }
+
+                case EventName.SensorValueDetected:
+                {
+                    break;
+                }
+
+                case EventName.NeedToMoveDetected:
+                {
+                    try
+                    {
+                        var details = JsonConvert.DeserializeObject<Dictionary<string, object>>(eventDescriptor.Detail);
+                        SetDisplay("MoL", details["l"].ToString());
+                        SetDisplay("MoR", details["r"].ToString());
+                    }
+                    catch (Exception) { }
+                    break;
+                }
+
+                case EventName.NewImageDetected:
+                {
+                    break;
+                }
+
+                case EventName.RawRobotDataDetected:
+                {
+                    break;
+                }
+
                 case EventName.RobotData:
+                {
                     var s = eventDescriptor.State;
-                    SetDisplay("AccelX", s.XAcceleration.ToString("0.0"), GetColorByThresholds(s.XAcceleration, 2f, 3.5f));
-                    SetDisplay("AccelY", s.YAcceleration.ToString("0.0"), GetColorByThresholds(s.YAcceleration, 2f, 3.5f));
-                    SetDisplay("AccelZ", s.ZAcceleration.ToString("0.0"), GetColorByThresholds((s.ZAcceleration -10)%10 , 2f, 3.5f));
-                    SetDisplay("Distance", s.ObstacleDistance.ToString("0.0"), GetColorByThresholds(s.ObstacleDistance, 20f, 10f));
-                    SetDisplay("Voltage", s.BatteryVoltage.ToString("0.0"), GetColorByThresholds(s.BatteryVoltage, 12f, 10f));
-                    SetDisplay("Compass", s.CompassHeading.ToString("0.0"));
+                    SetDisplay("AcX", s.XAcceleration.ToString("0.0"), GetColorByThresholds(s.XAcceleration, 2f, 3.5f));
+                    SetDisplay("AcY", s.YAcceleration.ToString("0.0"), GetColorByThresholds(s.YAcceleration, 2f, 3.5f));
+                    SetDisplay("AcZ", s.ZAcceleration.ToString("0.0"), GetColorByThresholds((s.ZAcceleration - 10) % 10, 2f, 3.5f));
+                    SetDisplay("Dcm", s.ObstacleDistance.ToString("0.0"), GetColorByThresholds(s.ObstacleDistance, 20f, 10f));
+                    SetDisplay("Vlt", s.BatteryVoltage.ToString("0.0"), GetColorByThresholds(s.BatteryVoltage, 12f, 10f));
+                    SetDisplay("Cmp", s.CompassHeading.ToString("0.0"));
                     break;
+                }
+
                 case EventName.PleaseSay:
-                    SetDisplay("PleaseSay", eventDescriptor.Detail);
+                {
+                    SetDisplay("Say", eventDescriptor.Detail);
                     break;
+                }
+
                 case EventName.Exception:
-                    SetDisplay("Message", eventDescriptor.Detail);
+                {
+                    SetDisplay("Msg", eventDescriptor.Detail);
                     break;
+                }
             }
             RefreshDisplay();
         }
@@ -98,8 +141,9 @@ namespace RobotControl
         private int refreshCount = 0;
         private void RefreshDisplay()
         {
+            Console.CursorVisible = false;
             refreshCount++;
-            if (refreshCount > 16)
+            if (refreshCount > 64)
             {
                 refreshCount = 0;
                 Console.Clear();

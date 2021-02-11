@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace RobotControl.ClassLibrary
 {
-    class SerialPortImpl : ISerialPort
+    public class SerialPortImpl : ISerialPort
     {
 
         SerialPort serialPort = null;

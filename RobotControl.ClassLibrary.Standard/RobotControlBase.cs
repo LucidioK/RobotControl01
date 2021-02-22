@@ -1,12 +1,10 @@
-﻿using OpenCvSharp;
-
+﻿
 using System;
-using System.Collections.Concurrent;
-using System.Linq;
+using System.Threading;
 
 namespace RobotControl.ClassLibrary
 {
-    public abstract class RobotControlBase
+    public abstract class RobotControlBase : Stoppable
     {
         protected IMediator mediator;
 
@@ -32,6 +30,7 @@ namespace RobotControl.ClassLibrary
             {
                 finallyAction?.Invoke();
             }
+
         }
 
         public void PublishException(Exception ex) =>

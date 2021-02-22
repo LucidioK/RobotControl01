@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace RobotControl.ClassLibrary
@@ -17,12 +13,12 @@ namespace RobotControl.ClassLibrary
         IRobotCommunicationHandler robotCommunicationHandler;
         IRobotLogic robotLogic;
 
-        public static IMediator mediator = new Mediator();
+        public static IMediator Mediator = new Mediator();
 
         private  string[] LabelsOfObjectsToDetect;
 
         public RobotControl()
-            : base(mediator)
+            : base(Mediator)
         {
         }
 
@@ -34,7 +30,9 @@ namespace RobotControl.ClassLibrary
             bool UseFakeSpeechCommandListener = false,
             bool UseFakeSpeaker = false,
             bool UseFakeRobotCommunicationHandler = false,
-            bool UseFakeRobotLogic = false
+            bool UseFakeRobotLogic = false,
+            float LMultiplier = 1.0f,
+            float RMultiplier = 1.0f
             )
         {
             await Task.Run(() =>
@@ -43,18 +41,45 @@ namespace RobotControl.ClassLibrary
                 Array.Copy(labelsOfObjectsToDetect, LabelsOfObjectsToDetect, labelsOfObjectsToDetect.Length);
                 ISerialPort serialPort = UseFakeRobotCommunicationHandler ? (ISerialPort)new SerialPortFake() : new SerialPortImpl();
 
-                state = new State(mediator);
-                objectDetector = new ObjectDetector(mediator, UseFakeObjectDetector, "TinyYolo2_model.onnx", LabelsOfObjectsToDetect);
-                cameraCapturer = new CameraCapturer(mediator, UseFakeCameraCapturer);
-                robotCommunicationHandler = new RobotCommunicationHandler(mediator, serialPort, baudRate);
-                robotLogic = new RobotLogic(mediator, UseFakeRobotLogic, state);
+                state = new State(Mediator);
+                objectDetector = new ObjectDetector(Mediator, UseFakeObjectDetector, "TinyYolo2_model.onnx", LabelsOfObjectsToDetect);
+                cameraCapturer = new CameraCapturer(Mediator, UseFakeCameraCapturer);
+                robotCommunicationHandler = new RobotCommunicationHandler(Mediator, serialPort, baudRate);
+                robotLogic = new RobotLogic(Mediator, UseFakeRobotLogic, state);
+                robotLogic.SetMotorCalibrationValues(LMultiplier, RMultiplier);
 
-                mediator.AddTarget((IPubSubBase)robotCommunicationHandler);
-                mediator.AddTarget((IPubSubBase)robotLogic);
-                mediator.AddTarget((IPubSubBase)state);
-                mediator.AddTarget((IPubSubBase)objectDetector);
-                mediator.AddTarget((IPubSubBase)cameraCapturer);
+                Mediator.AddTarget((IPubSubBase)robotCommunicationHandler);
+                Mediator.AddTarget((IPubSubBase)robotLogic);
+                Mediator.AddTarget((IPubSubBase)state);
+                Mediator.AddTarget((IPubSubBase)objectDetector);
+                Mediator.AddTarget((IPubSubBase)cameraCapturer);
             });
         }
+
+        public async Task InitializeBasicAsync(int baudRate)
+        {
+            await Task.Run(() =>
+            {
+                ISerialPort serialPort = new SerialPortImpl();
+
+                state = new State(Mediator);
+                robotCommunicationHandler = new RobotCommunicationHandler(Mediator, serialPort, baudRate);
+                robotLogic = new RobotLogic(Mediator, false, state);
+
+                Mediator.AddTarget((IPubSubBase)robotCommunicationHandler);
+                Mediator.AddTarget((IPubSubBase)robotLogic);
+                Mediator.AddTarget((IPubSubBase)state);
+            });
+        }
+
+        public override void Stop()
+        {
+            Mediator.Stop();
+            Mediator.WaitWhileStillRunning();
+            base.Stop();
+        }
+
+        public void BlockEvent(EventName eventName) => Mediator.BlockEvent(eventName);
+        public void UnblockEvent(EventName eventName) => Mediator.UnblockEvent(eventName);
     }
 }

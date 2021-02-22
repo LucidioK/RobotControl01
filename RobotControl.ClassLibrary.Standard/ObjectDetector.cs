@@ -23,6 +23,7 @@ namespace RobotControl.ClassLibrary
         private PredictionEngine<ImageInputData, TinyYoloPrediction> tinyYoloPredictionEngine;
         private string[] labelsOfObjectsToDetect;
         private object detectLock = new object();
+        private object closingLock = new object();
 
         public int ImageWidth => ImageSettings.imageWidth;
         public int ImageHeight => ImageSettings.imageHeight;
@@ -121,14 +122,24 @@ namespace RobotControl.ClassLibrary
 
         public void OnEvent(IEventDescriptor eventDescriptor)
         {
-            switch (eventDescriptor.Name)
+            if (ShouldContinue())
             {
-                case EventName.NewImageDetected:
-                    DetectObjects(eventDescriptor.Bitmap);
-                    break;
-                default:
-                    return;
+                switch (eventDescriptor.Name)
+                {
+                    case EventName.NewImageDetected:
+                        DetectObjects(eventDescriptor.Bitmap);
+                        break;
+                    default:
+                        return;
+                }
             }
+        }
+
+        public override void Stop()
+        {
+            base.Stop();
+            tinyYoloPredictionEngine.Dispose();
+            FinishedCleaning();
         }
 
         #region ONNXImplementation

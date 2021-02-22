@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace RobotControl.ClassLibrary
 {
-    public class SerialPortImpl : ISerialPort
+    public class SerialPortImpl : Stoppable, ISerialPort
     {
 
         SerialPort serialPort = null;
@@ -51,7 +51,7 @@ namespace RobotControl.ClassLibrary
         {
             string input = string.Empty;
             string output = string.Empty;
-            while (true)
+            while (ShouldContinue())
             {
                 try
                 {
@@ -90,6 +90,9 @@ namespace RobotControl.ClassLibrary
                     }
                 }
             }
+
+            serialPort.Close();
+            FinishedCleaning();
         }
 
 
@@ -134,5 +137,6 @@ namespace RobotControl.ClassLibrary
                 throw new Exception($"Cannot open COM{portNumber}");
             }
         }
+
     }
 }

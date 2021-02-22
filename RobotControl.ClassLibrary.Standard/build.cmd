@@ -1,9 +1,11 @@
 if [%1] == [Clean] goto :Clean
+if [%1] == [clean] goto :Clean
 
 :Build
-dotnet restore --configfile RobotControl.ClassLibrary.Standard.Nuget.Config --no-cache --ignore-failed-sources  --runtime win-x64   --packages ..\packages
+dotnet restore --configfile ..\RobotControl.Nuget.Config --no-cache --ignore-failed-sources  --runtime win-x64   --packages ..\packages
 dotnet build   --no-restore --force  --runtime win-x64
-dotnet restore --configfile RobotControl.ClassLibrary.Standard.Nuget.Config --no-cache --ignore-failed-sources  --runtime linux-x64 --packages ..\packages
+
+dotnet restore --configfile ..\RobotControl.Nuget.Config --no-cache --ignore-failed-sources  --runtime linux-x64 --packages ..\packages
 dotnet build   --no-restore --force  --runtime linux-x64
 goto :End
 :Clean

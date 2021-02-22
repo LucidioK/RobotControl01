@@ -9,6 +9,8 @@ namespace RobotControl.ClassLibrary
         EvadingToShelter,
         ChargingBattery,
         AvoidingObstacle,
+        CompassCalibration,
+        MotorsCalibration,
         ChasingObject,
         Scanning,
         Idle,
@@ -26,6 +28,8 @@ namespace RobotControl.ClassLibrary
         RobotData,
         PleaseSay,
         Exception,
+        MotorCalibrationRequest,
+        MotorCalibrationResponse,
     }
 
     public static class EnumUtilities

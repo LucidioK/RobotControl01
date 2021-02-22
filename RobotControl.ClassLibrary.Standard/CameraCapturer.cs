@@ -16,10 +16,12 @@
         private Bitmap latestBitmap;
         private bool fresh = false;
         private bool fake;
+        private bool stop = false;
         private Thread thread;
         public CameraCapturer(IMediator mediator, bool fake) : base(mediator)
         {
             this.fake = fake;
+            this.stop = false;
             this.thread = new Thread(CameraCaptureLoopThread);
             this.thread.Priority = ThreadPriority.AboveNormal;
             this.thread.Start();
@@ -50,7 +52,7 @@
 
                 cameraCapturer.StartCapture();
                 var frame = new Mat();
-                while ((frame = cameraCapturer.ReadFromCapturer()) != null)
+                while (ShouldContinue() && (frame = cameraCapturer.ReadFromCapturer()) != null)
                 {
                     if (Monitor.TryEnter(cameraCapturer.latestBitmapLock))
                     {
@@ -63,6 +65,10 @@
                         });
                     }
                 }
+
+                videoCapture.Release();
+                videoCapture.Dispose();
+                FinishedCleaning();
             });
         }
 

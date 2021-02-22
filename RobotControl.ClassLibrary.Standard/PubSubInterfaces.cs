@@ -1,6 +1,15 @@
 ﻿namespace RobotControl.ClassLibrary
 {
-    public interface IPubSubBase
+    public interface IStoppable
+    {
+        void Stop();
+
+        void WaitWhileStillRunning();
+
+        bool ShouldWaitWhileStillRunning { get; }
+    }
+
+    public interface IPubSubBase : IStoppable
     {
 
     }

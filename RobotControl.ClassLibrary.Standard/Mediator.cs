@@ -5,10 +5,14 @@ namespace RobotControl.ClassLibrary
     using System.Collections.Generic;
     using System.Linq;
 
-    class Mediator : IMediator
+    class Mediator : Stoppable, IMediator
     {
         readonly ConcurrentQueue<IPublishTarget> publishTargets = new ConcurrentQueue<IPublishTarget>();
+        readonly ConcurrentBag<EventName> blockedEvents = new ConcurrentBag<EventName>();
         public EventName[] HandledEvents => new EventName[] { };
+
+        public override bool ShouldWaitWhileStillRunning => true;
+
         public Mediator()
         {
         }
@@ -37,6 +41,11 @@ namespace RobotControl.ClassLibrary
 
         public void OnEvent(IEventDescriptor eventDescriptor)
         {
+            if (blockedEvents.Contains(eventDescriptor.Name))
+            {
+                return;
+            }
+
             foreach (var publishTarget in publishTargets)
             {
                 if (publishTarget.HandledEvents.Contains(eventDescriptor.Name))
@@ -53,5 +62,26 @@ namespace RobotControl.ClassLibrary
         public void Subscribe(IPublishTarget target) =>
             publishTargets.Enqueue(target);
 
+        public override void Stop()
+        {
+            foreach (var target in publishTargets)
+            {
+                target.Stop();
+                if (target.ShouldWaitWhileStillRunning)
+                {
+                    target.WaitWhileStillRunning();
+                }
+            }
+
+            while (publishTargets.TryDequeue(out IPublishTarget target)) ;
+            FinishedCleaning();
+        }
+
+        public override void WaitWhileStillRunning() =>
+            WaitWhileStillRunningInternal(10000);
+
+        public void BlockEvent(EventName eventName) => blockedEvents.Add(eventName);
+
+        public void UnblockEvent(EventName eventName) => blockedEvents.TryTake(out EventName ev);
     }
 }

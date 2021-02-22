@@ -6,7 +6,8 @@ namespace RobotControl.ClassLibrary
     {
         private readonly bool fake;
         private IState state;
-        public EventName[] HandledEvents => new EventName[] { EventName.RobotData, EventName.ObjectDetected, EventName.RainDetected, EventName.VoiceCommandDetected };
+        private float LMultiplier = 1.0f, RMultiplier = 1.0f;
+        public EventName[] HandledEvents => new EventName[] { EventName.RobotData, EventName.ObjectDetected, EventName.RainDetected, EventName.MotorCalibrationRequest, EventName.VoiceCommandDetected };
         public RobotLogic(IMediator mediator, bool fake, IState state)
             : base(mediator)
         {
@@ -16,26 +17,43 @@ namespace RobotControl.ClassLibrary
 
         public void OnEvent(IEventDescriptor eventDescriptor)
         {
-            TryCatch(() =>
+            if (ShouldContinue())
             {
-                switch (eventDescriptor.Name)
+                TryCatch(() =>
                 {
-                    case EventName.RobotData:
-                        checkRobotData(eventDescriptor);
-                        break;
-                    case EventName.ObjectDetected:
-                        turnOrMove(eventDescriptor);
-                        break;
-                    case EventName.RainDetected:
-                        startEvadingToShelter();
-                        break;
-                    case EventName.VoiceCommandDetected:
-                        handleVoiceCommand(eventDescriptor);
-                        break;
-                    default:
-                        return;
-                }
-            });
+                    switch (eventDescriptor.Name)
+                    {
+                        case EventName.RobotData:
+                            checkRobotData(eventDescriptor);
+                            break;
+                        case EventName.ObjectDetected:
+                            turnOrMove(eventDescriptor);
+                            break;
+                        case EventName.RainDetected:
+                            startEvadingToShelter();
+                            break;
+                        case EventName.VoiceCommandDetected:
+                            handleVoiceCommand(eventDescriptor);
+                            break;
+                        case EventName.MotorCalibrationRequest:
+                            motorCalibrationRequest();
+                            break;
+                        default:
+                            return;
+                    }
+                });
+            }
+        }
+
+        public void SetMotorCalibrationValues(float LMultiplier, float RMultiplier)
+        {
+            this.LMultiplier = LMultiplier;
+            this.RMultiplier = RMultiplier;
+        }
+
+        private void motorCalibrationRequest()
+        {
+            ;
         }
 
         private void checkRobotData(IEventDescriptor eventDescriptor)
@@ -118,7 +136,7 @@ namespace RobotControl.ClassLibrary
             Publish(new EventDescriptor
             {
                 Name = EventName.NeedToMoveDetected,
-                Detail = $"{{'operation':'motor','l':{l},'r':{r}}}"
+                Detail = $"{{'operation':'motor','l':{l * LMultiplier},'r':{r * RMultiplier}}}"
             });
     }
 }

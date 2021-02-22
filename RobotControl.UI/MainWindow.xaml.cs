@@ -6,9 +6,12 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace RobotControl.UI
 {
@@ -22,12 +25,20 @@ namespace RobotControl.UI
         TimeChart accelYTimeChart;
         TimeChart accelZTimeChart;
         object exceptionLock = new object();
+        object startStopLock = new object();
+        float latestCompassHeading = 0.0f;
         List<EventName> handledEvents = new List<EventName>();
         string[] labelsOfObjectsToDetect;
+        string configurationPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "RobotControlConfiguration.json");
+        Configuration configuration = new Configuration();
+
         int baudRate;
         ConcurrentBag<string> exceptionsToBeIgnored = new ConcurrentBag<string>();
+        private bool alreadyConfigured = false;
 
         public EventName[] HandledEvents => this.Dispatcher.Invoke<EventName[]>(() => handledEvents.ToArray());
+
+        public bool ShouldWaitWhileStillRunning => throw new NotImplementedException();
 
         public MainWindow()
         {
@@ -41,29 +52,60 @@ namespace RobotControl.UI
             }
         }
 
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            if (!this.alreadyConfigured)
+            {
+                this.alreadyConfigured = true;
+                PopulateConfigurationData();
+                HandleConfigurationData();
+            }
+        }
+
         private async void startStop_ClickAsync(object sender, RoutedEventArgs e)
         {
-            var content = (string)this.startStop.Content;
-            if (content == "Start")
+            if (Monitor.TryEnter(startStopLock))
             {
-                this.baudRate = int.Parse(this.baudRateComboBox.Text);
-                this.startStop.Content = "Stop";
+                var previousCursor = this.Cursor;
+                try
+                {
+                    this.Cursor = Cursors.Wait;
+                    var content = (string)this.startStop.Content;
+                    SaveConfigurationData();
+                    if (content == "Start")
+                    {
+                        this.baudRate = int.Parse(this.baudRateComboBox.Text);
+                        this.startStop.Content = "Stop";
 
-                var useAudio = this.enableAudioCheckBox.IsChecked.GetValueOrDefault();
+                        var useAudio = this.enableAudioCheckBox.IsChecked.GetValueOrDefault();
 
-                this.RobotControl = new ClassLibrary.RobotControl();
-                await this.RobotControl.InitializeAsync(labelsOfObjectsToDetect: this.labelsOfObjectsToDetect,
-                    baudRate: this.baudRate,
-                    UseFakeSpeaker: !useAudio,
-                    UseFakeSpeechCommandListener: !useAudio);
-                this.RobotControl.Subscribe(this);
-            }
-            else
-            {
-                var eventDescriptor = new EventDescriptor { Name = EventName.NeedToMoveDetected, Detail = "{'operation':'motor','l':0,'r':0}" };
-                this.RobotControl.Publish(eventDescriptor);
-                eventDescriptor.WaitEvent.WaitOne();
-                Environment.Exit(0);
+                        this.RobotControl = new ClassLibrary.RobotControl();
+                        await this.RobotControl.InitializeAsync(labelsOfObjectsToDetect: this.labelsOfObjectsToDetect,
+                            baudRate: this.baudRate,
+                            UseFakeSpeaker: !useAudio,
+                            UseFakeSpeechCommandListener: !useAudio,
+                            LMultiplier: this.configuration.LeftMotorMultiplier,
+                            RMultiplier: this.configuration.RightMotorMultiplier);
+                        this.RobotControl.Subscribe(this);
+                        this.textMotors.IsEnabled = true;
+                        this.runMotors.IsEnabled = true;
+                        this.scanForObjects_Checked(null, null);
+                    }
+                    else
+                    {
+                        var eventDescriptor = new EventDescriptor { Name = EventName.NeedToMoveDetected, Detail = "{'operation':'motor','l':0,'r':0}" };
+                        this.RobotControl.Publish(eventDescriptor);
+                        eventDescriptor.WaitEvent.WaitOne();
+                        Environment.Exit(0);
+                    }
+
+                }
+                finally
+                {
+                    this.Cursor = previousCursor;
+                    Monitor.Exit(startStopLock);
+                }
             }
         }
 
@@ -116,6 +158,9 @@ namespace RobotControl.UI
                     //    this.lblCompass.Content = eventDescriptor.State.CompassHeading.ToString("0.0");
                     //});
                     break;
+                case EventName.MotorCalibrationResponse:
+
+                    break;
                 case EventName.RobotData:
                     this.Dispatcher.Invoke(()     =>
                     {
@@ -130,6 +175,7 @@ namespace RobotControl.UI
                         this.lblDistance.Content  = eventDescriptor.State.ObstacleDistance.ToString("0.0");
                         this.lblVoltage.Content   = eventDescriptor.State.BatteryVoltage.ToString("0.0");
                         this.lblCompass.Content   = eventDescriptor.State.CompassHeading.ToString("0.0");
+                        Interlocked.Exchange(ref this.latestCompassHeading, eventDescriptor.State.CompassHeading);
                     });
                     break;
                 case EventName.PleaseSay:
@@ -240,5 +286,175 @@ namespace RobotControl.UI
         {
             objectsToDetectComboBox_SelectionChanged(null, null);
         }
+
+        private async void calibrateCompass_Click(object sender, RoutedEventArgs e)
+        {
+            this.baudRate = int.Parse(this.baudRateComboBox.Text);
+
+            this.RobotControl = new ClassLibrary.RobotControl();
+            await this.RobotControl.InitializeBasicAsync(baudRate: this.baudRate);
+            this.RobotControl.Subscribe(this);
+            float north, south, east;
+            if ((north = askForCompassHeading("Point the front of the robot towards North")) == float.NegativeInfinity)
+            {
+                return;
+            }
+
+            if ((east = askForCompassHeading("Now, point the front of the robot towards East")) == float.NegativeInfinity)
+            {
+                return;
+            }
+
+            if ((south = askForCompassHeading("OK, now point the front of the robot towards South")) == float.NegativeInfinity)
+            {
+                return;
+            }
+
+
+
+        }
+
+        private float askForCompassHeading(string message)
+        {
+            var choice = MessageBox.Show(message, "Calibrating Compass", MessageBoxButton.OKCancel, MessageBoxImage.None);
+
+            if (choice == MessageBoxResult.Cancel)
+            {
+                return float.NegativeInfinity;
+            }
+
+            return getAverageCompassHeading();
+        }
+
+        private float getAverageCompassHeading()
+        {
+            float heading = 0;
+            for (var i = 0; i < 4; i++)
+            {
+                heading += this.latestCompassHeading;
+                Thread.Sleep(100);
+            }
+
+            return heading / 4;
+        }
+
+        private void calibrateMotors_Click(object sender, RoutedEventArgs e)
+        {
+            var choice = MessageBox.Show("Place the robot in a flat place with\nat least 2m of space ahead and 1m each side.\nThen click OK to continue.", "Calibrate Motors", MessageBoxButton.OKCancel);
+            if (choice == MessageBoxResult.Cancel)
+            {
+                return;
+            }
+
+            RobotControl.Publish(new EventDescriptor { Name = EventName.MotorCalibrationRequest });
+        }
+
+        public void Stop()
+        {
+        }
+
+        public void WaitWhileStillRunning()
+        {
+        }
+
+        private void textMotors_Click(object sender, RoutedEventArgs e)
+        {
+            StopDetectingObjects();
+            RobotControl.Publish(new EventDescriptor { Name = EventName.NeedToMoveDetected, Detail = $"{{'operation':'motor','l':0,'r':0}}" });
+
+            int r = (int)(250 * float.Parse(this.RMult.Text));
+            int l = (int)(-250 * float.Parse(this.LMult.Text));
+            RobotControl.Publish(new EventDescriptor { Name = EventName.NeedToMoveDetected, Detail = $"{{'operation':'motor','l':{l},'r':{r}}}" });
+            Thread.Sleep(500);
+            RobotControl.Publish(new EventDescriptor { Name = EventName.NeedToMoveDetected, Detail = $"{{'operation':'motor','l':0,'r':0}}" });
+            scanForObjects_Checked(null, null);
+        }
+
+        private void scanForObjects_Checked(object sender, RoutedEventArgs e)
+        {
+            if (RobotControl != null)
+            {
+                if (IsChecked(this.scanForObjects))
+                {
+                    StartDetectingObects();
+                }
+                else
+                {
+                    StopDetectingObjects();
+                }
+            }
+        }
+
+        private void StartDetectingObects()
+        {
+            RobotControl.UnblockEvent(EventName.NewImageDetected);
+            RobotControl.UnblockEvent(EventName.ObjectDetected);
+        }
+
+        private void StopDetectingObjects()
+        {
+            RobotControl.BlockEvent(EventName.NewImageDetected);
+            RobotControl.BlockEvent(EventName.ObjectDetected);
+        }
+
+        private void PopulateConfigurationData()
+        {
+            if (File.Exists(this.configurationPath))
+            {
+                string config = File.ReadAllText(this.configurationPath);
+                this.configuration = JsonConvert.DeserializeObject<Configuration>(config);
+            }
+        }
+
+        private void SaveConfigurationData()
+        {
+            this.configuration.EnableAudio          = IsChecked(this.enableAudioCheckBox);
+            this.configuration.ScanForObjects       = IsChecked(this.scanForObjects);
+            this.configuration.LeftMotorMultiplier  = float.Parse(this.LMult.Text);
+            this.configuration.RightMotorMultiplier = float.Parse(this.RMult.Text);
+            this.configuration.SerialPortBaudrate   = this.baudRate;
+
+            this.configuration.ObjectsToDetect.Clear();
+            for (int i = 0; i < this.objectsToDetectComboBox.Items.Count; i++)
+            {
+                CheckBox checkBox                   = (CheckBox)this.objectsToDetectComboBox.Items[i];
+                if (IsChecked(checkBox))
+                {
+                    this.configuration.ObjectsToDetect.Add((string)checkBox.Content);
+                }
+            }
+
+            File.WriteAllText(this.configurationPath, JsonConvert.SerializeObject(this.configuration));
+        }
+
+
+        private void HandleConfigurationData()
+        {
+            this.enableAudioCheckBox.IsChecked      = this.configuration.EnableAudio;
+            this.scanForObjects.IsChecked           = this.configuration.ScanForObjects;
+            this.LMult.Text                         = this.configuration.LeftMotorMultiplier.ToString("0.00");
+            this.RMult.Text                         = this.configuration.RightMotorMultiplier.ToString("0.00");
+            this.baudRate                           = this.configuration.SerialPortBaudrate;
+            this.baudRateComboBox.SelectedValue     = this.baudRate.ToString();
+            this.baudRateComboBox.Text              = this.baudRate.ToString();
+
+            for (int i                              = 0; i < this.objectsToDetectComboBox.Items.Count; i++)
+            {
+                CheckBox checkBox                   = (CheckBox)this.objectsToDetectComboBox.Items[i];
+                checkBox.IsChecked                  = this.configuration.ObjectsToDetect.Contains(checkBox.Content);
+            }
+        }
+
+        private bool IsChecked(CheckBox checkBox) => checkBox.IsChecked.HasValue ? checkBox.IsChecked.Value : false;
+
+        private void saveConfiguration_Click(object sender, RoutedEventArgs e) => SaveConfigurationData();
+
+        private void runMotors_Click(object sender, RoutedEventArgs e) =>
+            this.RobotControl.Publish(
+                new EventDescriptor
+                {
+                    Name = EventName.NeedToMoveDetected,
+                    Detail = $"{{'operation':'timedmotor','l':{(int)(int.Parse(this.LPower.Text) * this.configuration.LeftMotorMultiplier)},'r':{(int)(int.Parse(this.RPower.Text) * this.configuration.RightMotorMultiplier)},'t':{this.TimeToRun.Text}}}"
+                });
     }
 }

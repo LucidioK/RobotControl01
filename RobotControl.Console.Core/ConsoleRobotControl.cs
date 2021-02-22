@@ -46,6 +46,9 @@ namespace RobotControl
 
         List<EventName> handledEvents = new List<EventName>();
         public EventName[] HandledEvents => handledEvents.ToArray();
+
+        public bool ShouldWaitWhileStillRunning => false;
+
         private static global::RobotControl.ClassLibrary.RobotControl RobotControl;
         List<List<string>> dataFields = new List<List<string>>()
         {
@@ -222,11 +225,15 @@ namespace RobotControl
             dataDisplay.Value = detail;
             dataDisplay.Color = dataColor ?? Console.ForegroundColor;
         }
+
+        public void Stop() { }
+
+        public void WaitWhileStillRunning() { }
     }
 
 
 
-    class ConsoleRobotControl 
+    class ConsoleRobotControl
     {
         private static string[] labelsOfObjectsToDetect;
         private static int[] acceptableBaudRates = { 2400, 4800, 9600, 19200, 38400, 57600, 74880, 115200, 230400 };
@@ -261,7 +268,7 @@ namespace RobotControl
             var baudRateIndex = ArgIndex(args, "BaudRate");
             if (baudRateIndex >= 0)
             {
-                if (baudRateIndex + 1 >= args.Length || 
+                if (baudRateIndex + 1 >= args.Length ||
                     !int.TryParse(args[baudRateIndex+1], out baudRate) ||
                     !acceptableBaudRates.Contains(baudRate))
                 {

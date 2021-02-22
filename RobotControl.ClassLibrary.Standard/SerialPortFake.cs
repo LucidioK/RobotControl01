@@ -32,6 +32,8 @@ namespace RobotControl.ClassLibrary
             count = (int)fakeData.Count;
         }
 
+        public bool ShouldWaitWhileStillRunning => false;
+
         public bool Open(int portNumber, int baudRate, Action<string> onDataReceivedCallback, Action<Exception> onExceptionCallback)
         {
             this.onDataReceivedCallback = onDataReceivedCallback;
@@ -39,10 +41,19 @@ namespace RobotControl.ClassLibrary
             return true;
         }
 
+        public void Stop()
+        {
+        }
+
+        public void WaitWhileStillRunning()
+        {
+         }
+
         public void Write(string s)      =>
             System.Diagnostics.Debug.WriteLine($"{nameof(SerialPortFake)} would have written {s}");
 
         private int NextPosition()       =>
             (position = position < count - 1 ? position + 1 : 0);
+
     }
 }

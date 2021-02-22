@@ -77,38 +77,41 @@ namespace RobotControl.ClassLibrary
 
         public void OnEvent(IEventDescriptor eventDescriptor)
         {
-            TryCatch(() =>
+            if (ShouldContinue())
             {
-                if (eventDescriptor.Name == EventName.RawRobotDataDetected)
+                TryCatch(() =>
                 {
-                    RobotData robotData;
+                    if (eventDescriptor.Name == EventName.RawRobotDataDetected)
+                    {
+                        RobotData robotData;
 
-                    System.Diagnostics.Debug.WriteLine($"-->DATA FROM ROBOT: {eventDescriptor.Detail}");
-                    try
-                    {
-                        robotData = JsonConvert.DeserializeObject<RobotData>(eventDescriptor.Detail);
-                    }
-                    catch (Newtonsoft.Json.JsonException ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"-->EXCEPTION DESERIALIZING: {ex.Message}");
-                        return;
-                    }
+                        System.Diagnostics.Debug.WriteLine($"-->DATA FROM ROBOT: {eventDescriptor.Detail}");
+                        try
+                        {
+                            robotData = JsonConvert.DeserializeObject<RobotData>(eventDescriptor.Detail);
+                        }
+                        catch (Newtonsoft.Json.JsonException ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"-->EXCEPTION DESERIALIZING: {ex.Message}");
+                            return;
+                        }
 
-                    var state = (IState)new State(mediator)
-                    {
-                        BatteryVoltage = robotData.voltage,
-                        CompassHeading = robotData.compass,
-                        ObstacleDistance = robotData.distance,
-                        UVLevel = robotData.uv,
-                        XAcceleration = robotData.accelX,
-                        YAcceleration = robotData.accelY,
-                        ZAcceleration = robotData.accelZ,
-                    };
-                    var ev = new EventDescriptor { Name = EventName.RobotData, };
-                    ev.State = state;
-                    Publish(ev);
-                }
-            });
+                        var state = (IState)new State(mediator)
+                        {
+                            BatteryVoltage = robotData.voltage,
+                            CompassHeading = robotData.compass,
+                            ObstacleDistance = robotData.distance,
+                            UVLevel = robotData.uv,
+                            XAcceleration = robotData.accelX,
+                            YAcceleration = robotData.accelY,
+                            ZAcceleration = robotData.accelZ,
+                        };
+                        var ev = new EventDescriptor { Name = EventName.RobotData, };
+                        ev.State = state;
+                        Publish(ev);
+                    }
+                });
+            }
         }
     }
 }

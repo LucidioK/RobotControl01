@@ -1,7 +1,13 @@
-
+/*
+ * 
+ * {'operation':'stop'}
+ * {'operation':'motorcalibration'}
+ * {'operation':'motor','l':-200,'r':200}
+ * {'operation':'timedmotor','l':-200,'r':200,'t':500}
+ */
 #include <SPI.h>
 #include <ArduinoJson.h>
-#include <Adafruit_SI1145.h>
+// #include <Adafruit_SI1145.h>
 #include <Adafruit_LSM303_Accel.h>
 #include <Adafruit_LSM303DLH_Mag.h>
 #include <Adafruit_Sensor.h>
@@ -9,15 +15,29 @@
 #include "VoltageReader.h"
 #include <VL53L0X.h>
 
+enum RobotStateEnum
+{
+  NONE,
+  MOVING,
+  CALIBRATING,
+  STOPPED
+};
+
+
+RobotStateEnum             robotState = NONE;
 VoltageReader              voltageReader    (A0, 47000, 33000);
 
 VL53L0X                        distance;
-Adafruit_SI1145                uv      = Adafruit_SI1145();
+// Adafruit_SI1145                uv      = Adafruit_SI1145();
 Adafruit_LSM303_Accel_Unified  accel   = Adafruit_LSM303_Accel_Unified(54321);
 Adafruit_LSM303DLH_Mag_Unified mag     = Adafruit_LSM303DLH_Mag_Unified(12345);
+int calibrationDataCounter             = 0;
+float accummulatedAccelX               = 0.0;
+float accummulatedAccelY               = 0.0;
+float accummulatedAccelZ               = 0.0;
 bool                           accelOK = false;
 bool                           magOK   = false;
-bool                           uvOK    = false;
+// bool                           uvOK    = false;
 
 ArduinoMotorShieldL298P        motors  = ArduinoMotorShieldL298P();
 
@@ -26,6 +46,12 @@ String outStatus;
 void controlMotors(int l, int r)
 {
   motors.setSpeed(l, r);
+}
+
+void stop()
+{
+  controlMotors(0, 0);
+  robotState = STOPPED;
 }
 
 void readAndDispatchCommands()
@@ -43,9 +69,36 @@ void readAndDispatchCommands()
       outStatus += ";";      
       return;
     }
+    
     if (doc["operation"] == "motor")
     {
+      robotState = MOVING;
       controlMotors(doc["l"], doc["r"]);
+    }
+
+    if (doc["operation"] == "timedmotor")
+    {
+      robotState = MOVING;
+      controlMotors(doc["l"], doc["r"]);
+      delay(doc["t"]);
+      stop();
+    }
+
+    if (doc["operation"] == "motorcalibration")
+    {
+      calibrationDataCounter = 0;
+      accummulatedAccelX     = 0.0;
+      accummulatedAccelY     = 0.0;
+      accummulatedAccelZ     = 0.0;      
+      robotState             = CALIBRATING;
+
+      Serial.println("Starting calibration -200, 200.");
+      controlMotors(-200, 200);
+    }
+
+    if (doc["operation"] == "stop")
+    {
+      stop();
     }
   }
 }
@@ -73,6 +126,7 @@ float getCompassHeading()
 void sendSensorValues()
 {
   StaticJsonDocument<200> doc;
+  doc["dataType"]        = "sensorvalues";
   if (accelOK)
   {
     sensors_event_t event;
@@ -94,15 +148,15 @@ void sendSensorValues()
   doc["distance"] = distance.readRangeContinuousMillimeters() / 10;
   doc["voltage"]  = voltageReader.Get();
 
-  if (!uvOK)  outStatus += "uvNOK;";
-
-  uint16_t r1   = uv.readUV();
-  delay(10);
-  uint16_t r2   = uv.readUV();
-  delay(10);
-  uint16_t r3   = uv.readUV();
-    
-  doc["uv"]  = (r1+r2+r3) / 3;
+//  if (!uvOK)  outStatus += "uvNOK;";
+//
+//  uint16_t r1   = uv.readUV();
+//  delay(10);
+//  uint16_t r2   = uv.readUV();
+//  delay(10);
+//  uint16_t r3   = uv.readUV();
+//    
+//  doc["uv"]  = (r1+r2+r3) / 3;
   if (outStatus != "" && outStatus != ";")
   {
     doc["status"] = outStatus;
@@ -127,10 +181,10 @@ void initializeDistance()
   distance.startContinuous();
 }
 
-void initializeUV()
-{
-  uvOK = uv.begin();
-}
+//void initializeUV()
+//{
+//  uvOK = uv.begin();
+//}
 
 void initializeMag()
 {
@@ -149,23 +203,71 @@ void initializeAccel()
 }
 
 
-void setup() {
+void runCalibrationDataCollection()
+{
+  calibrationDataCounter++;
+
+  if (distance.readRangeContinuousMillimeters() < 200 || calibrationDataCounter > 100)
+  {
+    stop();
+    StaticJsonDocument<200> doc;
+    doc["dataType"]        = "motorcalibrationresponse";    
+    doc["averageAccelX"]   = accummulatedAccelX / calibrationDataCounter;    
+    doc["averageAccelY"]   = accummulatedAccelY / calibrationDataCounter;    
+    doc["averageAccelZ"]   = accummulatedAccelZ / calibrationDataCounter;    
+    doc["count"]           = calibrationDataCounter;    
+    String s;
+    serializeJson(doc, s);
+    Serial.println(s);    
+    delay(5000);
+  }
+
+  sensors_event_t event;
+  accel.getEvent(&event);
+  accummulatedAccelX += event.acceleration.x;
+  accummulatedAccelY += event.acceleration.y;
+  accummulatedAccelZ += event.acceleration.z;
+}
+
+void setup() 
+{
   Serial.begin(115200);
   initializeDistance();
-  initializeUV();
+//  initializeUV();
   initializeMag();
   initializeAccel();
 
-  Serial.println("Device is ready 20210202 1411");  
+  stop();
+  Serial.println("Device is ready 20210221 1900");  
 }
 
-void loop() {
-  
+void loop() 
+{
   outStatus = "";
-  
-  readAndDispatchCommands();
+  switch (robotState)
+  {
+    case NONE:
+    case MOVING:
+    {
+      readAndDispatchCommands();
+    
+      sendSensorValues();
+    
+      delay(100); 
 
-  sendSensorValues();
+      break;
+    }  
 
-  delay(100); 
+    case STOPPED:
+      Serial.print(".");
+      readAndDispatchCommands();
+      delay(1000);
+      break;
+
+    case CALIBRATING:
+      runCalibrationDataCollection();
+      delay(10);
+      break;
+  }
+
 }

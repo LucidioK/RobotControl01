@@ -48,14 +48,29 @@ namespace RobotControl.ClassLibrary
 
         public void OnEvent(IEventDescriptor eventDescriptor)
         {
-            switch (eventDescriptor.Name)
+            if (ShouldContinue())
             {
-                case EventName.NeedToMoveDetected:
-                    serialPort.Write(eventDescriptor.Detail);
-                    break;
-                default:
-                    return;
+                switch (eventDescriptor.Name)
+                {
+                    case EventName.NeedToMoveDetected:
+                        serialPort.Write(eventDescriptor.Detail);
+                        break;
+                    default:
+                        return;
+                }
             }
+            else
+            {
+                serialPort.Stop();
+            }
+        }
+
+
+        public override void Stop()
+        {
+            base.Stop();
+            serialPort.Stop();
+            FinishedCleaning();
         }
 
         private static string GetValidatedString(string s)
